@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { desc, eq, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { deals, leads, syncLog } from "@/db/schema";
 import { fetchNewRecords, fetchUpdatedRecords, type NetHuntRecord } from "./nethunt";
 import { normaliseSource } from "./taxonomy";
@@ -121,6 +121,7 @@ function mapLead(r: NetHuntRecord, unknown: Set<string>) {
 }
 
 async function lastSuccessfulSync(): Promise<Date | null> {
+  const db = getDb();
   const [row] = await db
     .select({ finishedAt: syncLog.finishedAt })
     .from(syncLog)
@@ -138,6 +139,7 @@ async function lastSuccessfulSync(): Promise<Date | null> {
  * so a record edited mid-run isn't missed.
  */
 export async function runSync(opts: { trigger: "manual" | "cron"; full?: boolean }): Promise<SyncResult> {
+  const db = getDb();
   const id = randomUUID();
   await db.insert(syncLog).values({ id, status: "running", trigger: opts.trigger });
 
