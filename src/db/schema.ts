@@ -105,3 +105,18 @@ export const syncLog = pgTable("sync_log", {
   error: text("error"),
   trigger: text("trigger"), // manual | cron
 });
+
+/**
+ * Browser sessions are opaque, random tokens. Only a SHA-256 hash is stored,
+ * so a database read cannot be used to impersonate an authenticated user.
+ */
+export const appSessions = pgTable(
+  "app_sessions",
+  {
+    tokenHash: text("token_hash").primaryKey(),
+    user: text("user").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({ expiresIdx: index("app_sessions_expires_idx").on(t.expiresAt) })
+);

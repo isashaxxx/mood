@@ -1,0 +1,400 @@
+.editor {
+  width: 100%;
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 32px;
+  margin: 0 0 14px;
+}
+
+.editButton,
+.resetButton,
+.addButton,
+.expandButton,
+.toolButtons button {
+  appearance: none;
+  border: 1px solid rgba(28, 28, 28, 0.16);
+  background: #fff;
+  border-radius: 8px;
+  color: #1c1c1c;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  padding: 5px 10px;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+}
+
+.editButton {
+  border-color: #3bb9be;
+  background: #3bb9be;
+  color: #fff;
+}
+
+.editButton:hover,
+.editButton[aria-pressed="true"] {
+  background: #239ca2;
+  border-color: #239ca2;
+}
+
+.resetButton:hover,
+.expandButton:hover,
+.toolButtons button:hover:not(:disabled) {
+  border-color: rgba(28, 28, 28, 0.55);
+  background: #f7f9fb;
+}
+
+.resetButton {
+  color: rgba(28, 28, 28, 0.62);
+}
+
+.saved {
+  color: rgba(28, 28, 28, 0.52);
+  font-size: 11px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.block {
+  min-width: 0;
+}
+
+.editingBlock {
+  border: 1px dashed rgba(59, 185, 190, 0.72);
+  border-radius: 14px;
+  padding: 9px;
+  background: rgba(227, 245, 255, 0.25);
+}
+
+.hiddenBlock {
+  background: rgba(229, 236, 246, 0.42);
+}
+
+.blockTools {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin: 0 0 9px;
+}
+
+.blockLabel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.blockLabel strong {
+  color: #1c1c1c;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.blockLabel span {
+  color: rgba(28, 28, 28, 0.48);
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.toolButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: flex-end;
+}
+
+.toolButtons button {
+  min-height: 28px;
+  padding: 4px 8px;
+}
+
+.toolButtons button:disabled {
+  cursor: not-allowed;
+  opacity: 0.36;
+}
+
+.toolButtons .removeButton {
+  border-color: rgba(226, 112, 127, 0.55);
+  color: #a03949;
+}
+
+.hiddenMessage,
+.noData {
+  color: rgba(28, 28, 28, 0.54);
+  font-size: 12px;
+  line-height: 18px;
+  padding: 8px 0 2px;
+}
+
+.expandButton {
+  margin-top: 2px;
+}
+
+.composer {
+  background: #f7f9fb;
+  border: 1px solid rgba(59, 185, 190, 0.33);
+  border-radius: 14px;
+  margin-top: 16px;
+  padding: 16px;
+}
+
+.composerHeading {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.composerHeading > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.composerHeading strong {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.composerHeading span {
+  color: rgba(28, 28, 28, 0.52);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.counter {
+  flex: none;
+}
+
+.formGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(128px, 0.8fr) minmax(180px, 1.4fr) minmax(135px, 0.8fr);
+}
+
+.formGrid label {
+  color: rgba(28, 28, 28, 0.58);
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  font-weight: 700;
+  gap: 5px;
+}
+
+.formGrid input,
+.formGrid select {
+  background: #fff;
+  border: 1px solid rgba(28, 28, 28, 0.16);
+  border-radius: 8px;
+  color: #1c1c1c;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  height: 32px;
+  min-width: 0;
+  padding: 6px 9px;
+}
+
+.formGrid input:focus,
+.formGrid select:focus,
+.editButton:focus,
+.resetButton:focus,
+.addButton:focus,
+.expandButton:focus,
+.toolButtons button:focus {
+  outline: 2px solid #95a4fc;
+  outline-offset: 2px;
+}
+
+.wideField {
+  grid-column: span 2;
+}
+
+.help,
+.formError {
+  font-size: 11px;
+  line-height: 16px;
+  margin-top: 10px;
+}
+
+.help {
+  color: rgba(28, 28, 28, 0.56);
+}
+
+.formError {
+  color: #a03949;
+  font-weight: 700;
+}
+
+.addButton {
+  background: #fff;
+  border-color: #3bb9be;
+  color: #14757b;
+  margin-top: 12px;
+}
+
+.addButton:hover:not(:disabled) {
+  background: #e3f5ff;
+}
+
+.addButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.widgetCard {
+  background: #fff;
+  border: 1px solid rgba(28, 28, 28, 0.09);
+  border-radius: 12px;
+  min-height: 116px;
+  padding: 15px;
+}
+
+.widgetError {
+  background: #fff7f8;
+  border-color: rgba(226, 112, 127, 0.38);
+}
+
+.widgetError p {
+  color: #a03949;
+  font-size: 12px;
+  line-height: 18px;
+  margin: 9px 0;
+}
+
+.widgetTitle {
+  color: rgba(28, 28, 28, 0.62);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.formulaValue {
+  color: #1c1c1c;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.16;
+  margin: 8px 0;
+}
+
+.expression {
+  color: rgba(28, 28, 28, 0.49);
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.chartWrap {
+  margin-top: 8px;
+}
+
+.chartWrap svg {
+  display: block;
+  max-width: 100%;
+  overflow: visible;
+  width: 100%;
+}
+
+.gridLine {
+  stroke: rgba(28, 28, 28, 0.11);
+  stroke-width: 1;
+}
+
+.axisText {
+  fill: rgba(28, 28, 28, 0.48);
+  font-family: Manrope, system-ui, sans-serif;
+  font-size: 10px;
+}
+
+.bar {
+  fill: #3bb9be;
+}
+
+.line {
+  stroke: #3bb9be;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.point {
+  fill: #fff;
+  stroke: #3bb9be;
+  stroke-width: 2.5;
+}
+
+.chartCaption {
+  color: rgba(28, 28, 28, 0.5);
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+@media (max-width: 720px) {
+  .toolbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .saved {
+    order: 3;
+    width: 100%;
+  }
+
+  .blockTools {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .toolButtons {
+    justify-content: flex-start;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .wideField {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 460px) {
+  .editingBlock {
+    padding: 8px;
+  }
+
+  .composer {
+    padding: 13px;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .wideField {
+    grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editButton,
+  .resetButton,
+  .addButton,
+  .expandButton,
+  .toolButtons button {
+    transition: none;
+  }
+}

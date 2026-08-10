@@ -1,11 +1,12 @@
-import { and, desc, gte, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { budget, deals, leads, metaStats, syncLog } from "@/db/schema";
 import { WON, LOST } from "./taxonomy";
+import type { MetricsFilters } from "./metrics-filters";
 
 export const MARGIN = Number(process.env.NEXT_PUBLIC_MARGIN ?? 0.1526);
 
-export type Filters = { from: string; to: string };
+export type Filters = MetricsFilters;
 
 export type SourceRow = {
   source: string;
@@ -39,7 +40,11 @@ export async function dealsBySource(f: Filters): Promise<SourceRow[]> {
       avgCycleDays: sql<number | null>`avg(${deals.wonAt} - ${deals.requestedAt}) filter (where ${deals.stage} = ${WON} and ${deals.requestedAt} is not null)`,
     })
     .from(deals)
-    .where(and(gte(deals.cohortMonth, f.from), lte(deals.cohortMonth, f.to)))
+    .where(
+      f.source
+        ? and(gte(deals.cohortMonth, f.from), lte(deals.cohortMonth, f.to), eq(deals.source, f.source))
+        : and(gte(deals.cohortMonth, f.from), lte(deals.cohortMonth, f.to))
+    )
     .groupBy(deals.source)
     .orderBy(sql`2 desc`);
   return rows.map(cast);
@@ -60,7 +65,11 @@ export async function dealsByMonth(f: Filters): Promise<MonthRow[]> {
       avgCycleDays: sql<number | null>`avg(${deals.wonAt} - ${deals.requestedAt}) filter (where ${deals.stage} = ${WON} and ${deals.requestedAt} is not null)`,
     })
     .from(deals)
-    .where(and(gte(deals.cohortMonth, f.from), lte(deals.cohortMonth, f.to)))
+    .where(
+      f.source
+        ? and(gte(deals.cohortMonth, f.from), lte(deals.cohortMonth, f.to), eq(deals.source, f.source))
+        : and(gte(deals.cohortMonth, f.from), lte(deals.cohortMonth, f.to))
+    )
     .groupBy(deals.cohortMonth, deals.source)
     .orderBy(deals.cohortMonth);
   return rows.map((r) => ({ ...cast(r), month: r.month }));
@@ -99,7 +108,11 @@ export async function leadBreakdown(f: Filters): Promise<LeadRow[]> {
       handlingCount: sql<number>`count(${leads.handlingHours})`,
     })
     .from(leads)
-    .where(and(gte(leads.month, f.from), lte(leads.month, f.to)))
+    .where(
+      f.source
+        ? and(gte(leads.month, f.from), lte(leads.month, f.to), eq(leads.source, f.source))
+        : and(gte(leads.month, f.from), lte(leads.month, f.to))
+    )
     .groupBy(leads.month, leads.channel, leads.source);
   return rows.map((r) => ({
     ...r,
@@ -117,6 +130,16 @@ export async function leadBreakdown(f: Filters): Promise<LeadRow[]> {
 }
 
 export async function spend(f: Filters) {
+  const sourceChannels = f.source
+    ? Object.entries(SPEND_TO_SOURCE)
+        .filter(([, source]) => source === f.source)
+        .map(([channel]) => channel)
+    : null;
+
+  // A source without a directly attributable budget must not inherit the
+  // total advertising/overhead spend when it is the active source filter.
+  if (sourceChannels && sourceChannels.length === 0) return [];
+
   const db = getDb();
   const rows = await db
     .select({
@@ -127,12 +150,20 @@ export async function spend(f: Filters) {
       fxRate: budget.fxRate,
     })
     .from(budget)
-    .where(and(gte(budget.month, f.from), lte(budget.month, f.to)))
+    .where(
+      sourceChannels
+        ? and(gte(budget.month, f.from), lte(budget.month, f.to), inArray(budget.channel, sourceChannels))
+        : and(gte(budget.month, f.from), lte(budget.month, f.to))
+    )
     .orderBy(budget.month);
   return rows;
 }
 
 export async function meta(f: Filters) {
+  // Meta delivery metrics describe the paid Instagram channel only. Returning
+  // them for a different selected source would make the source view additive.
+  if (f.source && f.source !== SPEND_TO_SOURCE.meta) return [];
+
   const db = getDb();
   return db
     .select()

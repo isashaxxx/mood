@@ -2,17 +2,26 @@ import { NextResponse } from "next/server";
 import {
   dealsByMonth, dealsBySource, lastSync, leadBreakdown, meta, spend, MARGIN,
 } from "@/lib/metrics";
+import { userFromRequest } from "@/lib/auth";
+import { currentReportingMonth, MetricsFilterError, parseMetricsFilters } from "@/lib/metrics-filters";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  if (!(await userFromRequest(req))) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   const url = new URL(req.url);
-  const now = new Date().toISOString().slice(0, 7);
-  const f = {
-    from: url.searchParams.get("from") ?? "2026-01",
-    to: url.searchParams.get("to") ?? now,
-  };
+  let f;
+
+  try {
+    f = parseMetricsFilters(url.searchParams);
+  } catch (error) {
+    const message = error instanceof MetricsFilterError ? error.message : "Некоректні параметри фільтра.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 
   try {
     const [bySource, byMonth, leads, budget, metaRows, sync] = await Promise.all([
@@ -20,7 +29,7 @@ export async function GET(req: Request) {
     ]);
 
     return NextResponse.json({
-      filters: f, margin: MARGIN, currentMonth: now,
+      filters: f, margin: MARGIN, currentMonth: currentReportingMonth(),
       bySource, byMonth, leads, budget, meta: metaRows,
       sync: sync && {
         finishedAt: sync.finishedAt, status: sync.status, trigger: sync.trigger,

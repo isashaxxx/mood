@@ -1,7 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { SOURCE_COLORS } from "@/lib/taxonomy";
+import {
+  DashboardCustomWidget,
+  DashboardEditableBlock,
+  DashboardEditToolbar,
+  DashboardWidgetComposer,
+  useDashboardEditor,
+  type DashboardChartSeries,
+  type DashboardEditorController,
+  type DashboardFormulaMetric,
+} from "@/components/DashboardEditor";
 
 type SourceRow = {
   source: string;
@@ -41,23 +51,45 @@ const colour = (s: string) => SOURCE_COLORS[s] ?? "#D9DEE4";
 const SPEND_LABEL: Record<string, string> = {
   meta: "Meta", google_ads: "Google PPC", seo: "SEO", specialist: "Спеціаліст",
 };
+const BUDGET_SOURCE: Record<string, string | null> = {
+  meta: "Instagram Paid",
+  google_ads: "Google PPC",
+  seo: "Google Organic",
+  specialist: null,
+};
 
 type View = "db" | "ld" | "dl" | "sr";
 const VIEWS: Array<[View, string]> = [
   ["db", "Dashboard"], ["ld", "Ліди"], ["dl", "Угоди"], ["sr", "Джерела"],
 ];
+const EDITABLE_BLOCK_IDS: Record<View, readonly string[]> = {
+  db: ["dashboard-kpis", "dashboard-revenue", "dashboard-funnel"],
+  ld: ["leads-kpis", "leads-breakdown", "leads-note"],
+  dl: ["deals-kpis", "deals-by-source", "deals-by-month"],
+  sr: ["sources-overview", "sources-revenue"],
+};
 
-export default function Dashboard() {
+type EditableBlockDefinition = {
+  id: string;
+  title: string;
+  description?: string;
+  children: ReactNode;
+};
+
+export default function Dashboard({ user }: { user: string }) {
   const [data, setData] = useState<Payload | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
   const [view, setView] = useState<View>("db");
-  const [allTime, setAllTime] = useState(false);
-  const [months, setMonths] = useState<Set<string>>(new Set());
-  const [sources, setSources] = useState<Set<string>>(new Set());
-  const [channels, setChannels] = useState<Set<string>>(new Set());
+  // A filter always means one exact value. The previous multi-select state
+  // accidentally removed the clicked source from the full set, which made a
+  // source click look like a sum of every other source.
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -83,7 +115,7 @@ export default function Dashboard() {
     load().then((json) => {
       // Default view is the month in progress — that is what anyone opening
       // this at 9am actually wants to see.
-      setMonths(new Set([json.currentMonth]));
+      setSelectedMonth(json.currentMonth);
     }).catch(() => undefined);
   }, [load]);
 
@@ -101,26 +133,12 @@ export default function Dashboard() {
     [data]
   );
 
-  const activeMonths = useMemo(
-    () => (allTime || !months.size ? new Set(allMonths) : months),
-    [allTime, months, allMonths]
-  );
-  const activeSources = useMemo(
-    () => (sources.size ? sources : new Set(allSources)),
-    [sources, allSources]
-  );
-  const activeChannels = useMemo(
-    () => (channels.size ? channels : new Set(allChannels)),
-    [channels, allChannels]
-  );
-
   async function refresh() {
     setSyncing(true);
     setFlash(null);
     try {
       const res = await fetch("/api/sync", {
         method: "POST",
-        headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_SYNC_TOKEN ?? ""}` },
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error ?? "sync failed");
@@ -137,20 +155,40 @@ export default function Dashboard() {
     }
   }
 
+  async function logout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      window.location.assign("/login");
+    }
+  }
+
   const deals = useMemo(
-    () => (data?.byMonth ?? []).filter((r) => activeMonths.has(r.month) && activeSources.has(r.source)),
-    [data, activeMonths, activeSources]
+    () => (data?.byMonth ?? []).filter(
+      (r) => (!selectedMonth || r.month === selectedMonth) && (!selectedSource || r.source === selectedSource)
+    ),
+    [data, selectedMonth, selectedSource]
   );
   const leadRows = useMemo(
     () =>
       (data?.leads ?? []).filter(
-        (r) => activeMonths.has(r.month) && activeSources.has(r.source) && activeChannels.has(r.channel)
+        (r) =>
+          (!selectedMonth || r.month === selectedMonth) &&
+          (!selectedSource || r.source === selectedSource) &&
+          (!selectedChannel || r.channel === selectedChannel)
       ),
-    [data, activeMonths, activeSources, activeChannels]
+    [data, selectedMonth, selectedSource, selectedChannel]
   );
   const spendRows = useMemo(
-    () => (data?.budget ?? []).filter((r) => activeMonths.has(r.month)),
-    [data, activeMonths]
+    () =>
+      (data?.budget ?? []).filter(
+        (r) =>
+          (!selectedMonth || r.month === selectedMonth) &&
+          (!selectedSource || BUDGET_SOURCE[r.channel] === selectedSource)
+      ),
+    [data, selectedMonth, selectedSource]
   );
 
   const totals = useMemo(() => {
@@ -164,6 +202,61 @@ export default function Dashboard() {
     const margin = data?.margin ?? 0.1526;
     return { won, wonCount, lostCount, pipeline, pipelineCount, lost, cost, profit: won * margin, margin };
   }, [deals, spendRows, data]);
+
+  const displayMonths = useMemo(
+    () => (selectedMonth ? [selectedMonth] : allMonths),
+    [allMonths, selectedMonth]
+  );
+  const editor = useDashboardEditor({
+    dashboardId: `moodua-${user}-${view}`,
+    blockIds: EDITABLE_BLOCK_IDS[view],
+  });
+  const editorMetrics = useMemo<DashboardFormulaMetric[]>(() => {
+    const leadTotal = leadRows.reduce((sum, row) => sum + row.total, 0);
+    const romi = totals.cost ? (totals.profit / totals.cost) * 100 : 0;
+    return [
+      { id: "revenue", label: "Виручка", value: totals.won },
+      { id: "spend", label: "Витрати", value: totals.cost },
+      { id: "profit", label: "Прибуток", value: totals.profit },
+      { id: "pipeline", label: "Пайплайн", value: totals.pipeline },
+      { id: "deals", label: "Угоди", value: totals.pipelineCount },
+      { id: "won_deals", label: "Виграні угоди", value: totals.wonCount },
+      { id: "lost_deals", label: "Програні угоди", value: totals.lostCount },
+      { id: "leads", label: "Ліди", value: leadTotal },
+      { id: "romi", label: "ROMI", value: romi },
+      { id: "margin_percent", label: "Маржа", value: totals.margin * 100 },
+    ];
+  }, [leadRows, totals]);
+  const editorChartSeries = useMemo<DashboardChartSeries[]>(() => {
+    const byMonth = (value: (row: MonthRow) => number) =>
+      displayMonths.map((month) => ({
+        label: label(month),
+        value: deals.filter((row) => row.month === month).reduce((sum, row) => sum + value(row), 0),
+      }));
+    const leadByMonth = displayMonths.map((month) => ({
+      label: label(month),
+      value: leadRows.filter((row) => row.month === month).reduce((sum, row) => sum + row.total, 0),
+    }));
+    const spendByMonth = displayMonths.map((month) => ({
+      label: label(month),
+      value: spendRows.filter((row) => row.month === month).reduce((sum, row) => sum + row.amountUah, 0),
+    }));
+    const revenueBySource = new Map<string, number>();
+    for (const row of deals) revenueBySource.set(row.source, (revenueBySource.get(row.source) ?? 0) + row.won);
+    return [
+      { id: "revenue_by_month", label: "Виручка за місяцями", points: byMonth((row) => row.won) },
+      { id: "pipeline_by_month", label: "Пайплайн за місяцями", points: byMonth((row) => row.pipeline) },
+      { id: "leads_by_month", label: "Ліди за місяцями", points: leadByMonth },
+      { id: "spend_by_month", label: "Витрати за місяцями", points: spendByMonth },
+      {
+        id: "revenue_by_source",
+        label: "Виручка за джерелами",
+        points: [...revenueBySource]
+          .sort((a, b) => b[1] - a[1])
+          .map(([source, value]) => ({ label: source, value })),
+      },
+    ];
+  }, [deals, displayMonths, leadRows, spendRows]);
 
   if (loading && !data) {
     return (
@@ -203,13 +296,16 @@ export default function Dashboard() {
       <main>
         <div className="crumbs">
           Аналітика <span>/</span> <b>{VIEWS.find(([v]) => v === view)?.[1]}</b>
-          <span className="right">
+          <div className="right">
+            <span className="profile"><img src="/moodua-logo.png" alt="MOODua" />{user}</span>
             <span>Оновлено {stamp}</span>
+            <button className="refresh" onClick={logout} disabled={loggingOut}>{loggingOut ? "Виходжу…" : "Вийти"}</button>
             <button className="refresh" onClick={refresh} disabled={syncing}>
               {syncing && <span className="spin" aria-hidden />}
               {syncing ? "Оновлюю…" : "Оновити"}
             </button>
-          </span>
+            <DashboardEditToolbar editor={editor} className="top-editor-toolbar" />
+          </div>
         </div>
         {flash && <div className="warn" role="status">{flash}</div>}
 
@@ -217,40 +313,35 @@ export default function Dashboard() {
           <div className="fg">
             <div className="fl">Період</div>
             <div className="chips">
-              <button className="chip act" aria-pressed={!allTime}
-                onClick={(e) => { e.currentTarget.blur(); setAllTime(false); setMonths(new Set([data!.currentMonth])); }}>
+              <button className="chip act" aria-pressed={selectedMonth === data.currentMonth}
+                onClick={(e) => { e.currentTarget.blur(); setSelectedMonth(data!.currentMonth); }}>
                 Поточний місяць
               </button>
-              <button className="chip act" aria-pressed={allTime}
-                onClick={(e) => { e.currentTarget.blur(); setAllTime(true); }}>
+              <button className="chip act" aria-pressed={selectedMonth === null}
+                onClick={(e) => { e.currentTarget.blur(); setSelectedMonth(null); }}>
                 За весь період
               </button>
             </div>
           </div>
-          <Chips label="Місяць" items={allMonths} sel={activeMonths} cls=""
+          <Chips label="Місяць" items={allMonths} selected={selectedMonth} cls=""
             render={label}
-            toggle={(m) => { setAllTime(false); setMonths(toggle(activeMonths, m, allMonths)); }} />
-          <Chips label="Джерело" items={allSources} sel={activeSources} cls="s"
-            toggle={(s) => setSources(toggle(activeSources, s, allSources))} />
+            choose={setSelectedMonth} />
+          <Chips label="Джерело" items={allSources} selected={selectedSource} cls="s"
+            choose={setSelectedSource} allLabel="Всі джерела" />
           {view === "ld" && (
-            <Chips label="Канал" items={allChannels} sel={activeChannels} cls="c"
-              toggle={(c) => setChannels(toggle(activeChannels, c, allChannels))} />
+            <Chips label="Канал" items={allChannels} selected={selectedChannel} cls="c"
+              choose={setSelectedChannel} allLabel="Всі канали" />
           )}
         </div>
 
-        {view === "db" && <DashboardView deals={deals} leads={leadRows} spend={spendRows} totals={totals} months={[...activeMonths].sort()} />}
-        {view === "ld" && <LeadsView leads={leadRows} />}
-        {view === "dl" && <DealsView deals={deals} spend={spendRows} margin={totals.margin} months={[...activeMonths].sort()} />}
-        {view === "sr" && <SourcesView deals={deals} spend={spendRows} meta={data!.meta.filter((m) => activeMonths.has(m.month))} margin={totals.margin} />}
+        {view === "db" && <DashboardView deals={deals} leads={leadRows} spend={spendRows} totals={totals} months={displayMonths} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
+        {view === "ld" && <LeadsView leads={leadRows} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
+        {view === "dl" && <DealsView deals={deals} spend={spendRows} margin={totals.margin} months={displayMonths} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
+        {view === "sr" && <SourcesView deals={deals} spend={spendRows} meta={data!.meta.filter((m) => (!selectedMonth || m.month === selectedMonth) && (!selectedSource || selectedSource === "Instagram Paid"))} selectedSource={selectedSource} margin={totals.margin} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
+        {editor.isEditing && <DashboardWidgetComposer editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
       </main>
     </div>
   );
-}
-
-function toggle(cur: Set<string>, v: string, all: string[]): Set<string> {
-  const next = new Set(cur);
-  next.has(v) ? next.delete(v) : next.add(v);
-  return next.size ? next : new Set(all);
 }
 
 function Sidebar({ view, setView }: { view: View; setView: (v: View) => void }) {
@@ -276,17 +367,19 @@ function Sidebar({ view, setView }: { view: View; setView: (v: View) => void }) 
   );
 }
 
-function Chips({ label: title, items, sel, cls, toggle: onToggle, render }: {
-  label: string; items: string[]; sel: Set<string>; cls: string;
-  toggle: (v: string) => void; render?: (v: string) => string;
+function Chips({ label: title, items, selected, cls, choose, render, allLabel }: {
+  label: string; items: string[]; selected: string | null; cls: string;
+  choose: (v: string | null) => void; render?: (v: string) => string; allLabel?: string;
 }) {
   return (
     <div className="fg">
       <div className="fl">{title}</div>
       <div className="chips">
+        {allLabel && <button className={`chip ${cls}`} aria-pressed={selected === null}
+          onClick={(e) => { e.currentTarget.blur(); choose(null); }}>{allLabel}</button>}
         {items.map((v) => (
-          <button key={v} className={`chip ${cls}`} aria-pressed={sel.has(v)}
-            onClick={(e) => { e.currentTarget.blur(); onToggle(v); }}>
+          <button key={v} className={`chip ${cls}`} aria-pressed={selected === v}
+            onClick={(e) => { e.currentTarget.blur(); choose(v); }}>
             {render ? render(v) : v}
           </button>
         ))}
@@ -322,10 +415,55 @@ function byKey<T extends { [k: string]: unknown }>(rows: T[], key: keyof T, adds
   return map;
 }
 
+function EditableBlocks({
+  editor,
+  blocks,
+  metrics,
+  chartSeries,
+}: {
+  editor: DashboardEditorController;
+  blocks: EditableBlockDefinition[];
+  metrics: DashboardFormulaMetric[];
+  chartSeries: DashboardChartSeries[];
+}) {
+  const blockMap = new Map(blocks.map((block) => [block.id, block]));
+  const widgetMap = new Map(editor.config.widgets.map((widget) => [widget.id, widget]));
+
+  return (
+    <>
+      {editor.orderedIds.map((id) => {
+        const block = blockMap.get(id);
+        if (block) {
+          return (
+            <DashboardEditableBlock
+              key={block.id}
+              editor={editor}
+              id={block.id}
+              title={block.title}
+              description={block.description}
+            >
+              {block.children}
+            </DashboardEditableBlock>
+          );
+        }
+
+        const widget = widgetMap.get(id);
+        if (!widget) return null;
+        return (
+          <DashboardEditableBlock key={widget.id} editor={editor} id={widget.id} title={widget.title} removable>
+            <DashboardCustomWidget widget={widget} metrics={metrics} chartSeries={chartSeries} />
+          </DashboardEditableBlock>
+        );
+      })}
+    </>
+  );
+}
+
 /* ------------------------------- Dashboard ------------------------------- */
-function DashboardView({ deals, leads, spend, totals, months }: {
+function DashboardView({ deals, leads, spend, totals, months, editor, metrics, chartSeries }: {
   deals: MonthRow[]; leads: LeadRow[]; spend: BudgetRow[];
   totals: ReturnType<typeof Object> & Record<string, number>; months: string[];
+  editor: DashboardEditorController; metrics: DashboardFormulaMetric[]; chartSeries: DashboardChartSeries[];
 }) {
   const romi = totals.cost ? (totals.profit / totals.cost) * 100 : 0;
   const leadTotal = leads.reduce((s, r) => s + r.total, 0);
@@ -336,10 +474,11 @@ function DashboardView({ deals, leads, spend, totals, months }: {
   }));
   const src = byKey(deals, "source", ["won", "wonCount", "pipeline"]);
 
-  return (
-    <>
-      <h2 className="t">Ключові показники</h2>
-      <Kpis items={[
+  const blocks: EditableBlockDefinition[] = [
+    {
+      id: "dashboard-kpis",
+      title: "Ключові показники",
+      children: <><h2 className="t">Ключові показники</h2><Kpis items={[
         ["Виручка", short(totals.won) + " ₴", `${totals.wonCount} угод`, "", "var(--blue)"],
         ["Витрати", uah(totals.cost) + " ₴", "реклама + ведення", "", "var(--peri)"],
         ["Прибуток", short(totals.profit) + " ₴", `маржа ${(totals.margin * 100).toFixed(2)}%`, totals.profit > totals.cost ? "up" : "dn", "var(--blue)"],
@@ -348,9 +487,12 @@ function DashboardView({ deals, leads, spend, totals, months }: {
         ["Win rate", pct(totals.wonCount, totals.wonCount + totals.lostCount).toFixed(0) + "%", `${totals.lostCount} програно`, "", "var(--blue)"],
         ["Середній чек", totals.wonCount ? uah(totals.won / totals.wonCount) + " ₴" : "—", "новий клієнт", "", "var(--peri)"],
         ["Лідів", uah(leadTotal), "з 13.06.2026", "", "var(--blue)"],
-      ]} />
-
-      <div className="grid g21">
+      ]} /></>,
+    },
+    {
+      id: "dashboard-revenue",
+      title: "Виручка та джерела",
+      children: <div className="grid g21">
         <div className="card">
           <div className="ch">Виручка та витрати <small>по місяцю запиту</small></div>
           <LineChart data={perMonth} />
@@ -359,9 +501,12 @@ function DashboardView({ deals, leads, spend, totals, months }: {
           <div className="ch">Виручка за джерелами</div>
           <Donut rows={[...src].map(([k, v]) => [k, v.won] as [string, number])} />
         </div>
-      </div>
-
-      <div className="grid g11">
+      </div>,
+    },
+    {
+      id: "dashboard-funnel",
+      title: "Витрати та воронка",
+      children: <div className="grid g11">
         <div className="card">
           <div className="ch">Витрати за каналами</div>
           <Bars rows={[...byKey(spend, "channel", ["amountUah"])].map(([k, v]) => [SPEND_LABEL[k] ?? k, v.amountUah] as [string, number])} />
@@ -379,13 +524,17 @@ function DashboardView({ deals, leads, spend, totals, months }: {
             Аутбаунд виключено з усіх розрахунків.
           </div>
         </div>
-      </div>
-    </>
-  );
+      </div>,
+    },
+  ];
+
+  return <EditableBlocks editor={editor} blocks={blocks} metrics={metrics} chartSeries={chartSeries} />;
 }
 
 /* --------------------------------- Leads --------------------------------- */
-function LeadsView({ leads }: { leads: LeadRow[] }) {
+function LeadsView({ leads, editor, metrics, chartSeries }: {
+  leads: LeadRow[]; editor: DashboardEditorController; metrics: DashboardFormulaMetric[]; chartSeries: DashboardChartSeries[];
+}) {
   const total = leads.reduce((s, r) => s + r.total, 0);
   const mql = leads.reduce((s, r) => s + r.mql, 0);
   const sq = leads.reduce((s, r) => s + r.sql_, 0);
@@ -435,10 +584,11 @@ function LeadsView({ leads }: { leads: LeadRow[] }) {
     );
   };
 
-  return (
-    <>
-      <h2 className="t">Ліди</h2>
-      <Kpis items={[
+  const blocks: EditableBlockDefinition[] = [
+    {
+      id: "leads-kpis",
+      title: "Показники лідів",
+      children: <><h2 className="t">Ліди</h2><Kpis items={[
         ["Всього лідів", uah(total), "", "", "var(--blue)"],
         ["MQL → SQL", mql + sq ? pct(sq, mql + sq).toFixed(0) + "%" : "—", `${mql} MQL · ${sq} SQL`, "", "var(--peri)"],
         ["Спам-рейт", total ? pct(junk, total).toFixed(0) + "%" : "—", `${uah(junk)} нецільових`, pct(junk, total) > 50 ? "dn" : "", "var(--blue)"],
@@ -447,22 +597,33 @@ function LeadsView({ leads }: { leads: LeadRow[] }) {
         ["SQL", uah(sq), total ? pct(sq, total).toFixed(0) + "% від лідів" : "", "", "var(--blue)"],
         ["Каналів", String(new Set(leads.map((r) => r.channel)).size), "активних", "", "var(--blue)"],
         ["З атрибуцією", String(new Set(leads.filter((r) => r.source !== "Не вказано").map((r) => r.source)).size), "джерел", "", "var(--peri)"],
-      ]} />
-      <div className="grid g11">
+      ]} /></>,
+    },
+    {
+      id: "leads-breakdown",
+      title: "Розподіл лідів",
+      children: <div className="grid g11">
         {table("channel", "За каналом звернення", "time")}
         {table("source", "За джерелом", "sales")}
-      </div>
-      <div className="note">
+      </div>,
+    },
+    {
+      id: "leads-note",
+      title: "Пояснення до обробки",
+      children: <div className="note">
         Середній час обробки — проміжок від створення картки до останньої зміни. Окремого поля
         «дата передачі в Sales» у NetHunt немає; щойно воно з’явиться, показник стане точним.
-      </div>
-    </>
-  );
+      </div>,
+    },
+  ];
+
+  return <EditableBlocks editor={editor} blocks={blocks} metrics={metrics} chartSeries={chartSeries} />;
 }
 
 /* --------------------------------- Deals --------------------------------- */
-function DealsView({ deals, spend, margin, months }: {
+function DealsView({ deals, spend, margin, months, editor, metrics, chartSeries }: {
   deals: MonthRow[]; spend: BudgetRow[]; margin: number; months: string[];
+  editor: DashboardEditorController; metrics: DashboardFormulaMetric[]; chartSeries: DashboardChartSeries[];
 }) {
   const [sortKey, setSortKey] = useState<string>("won");
   const [dir, setDir] = useState(-1);
@@ -503,10 +664,11 @@ function DealsView({ deals, spend, margin, months }: {
     <th className="sortable" onClick={() => { sortKey === k ? setDir(-dir) : (setSortKey(k), setDir(-1)); }}>{name}</th>
   );
 
-  return (
-    <>
-      <h2 className="t">Угоди · когорта за датою запиту</h2>
-      <Kpis items={[
+  const blocks: EditableBlockDefinition[] = [
+    {
+      id: "deals-kpis",
+      title: "Показники угод",
+      children: <><h2 className="t">Угоди · когорта за датою запиту</h2><Kpis items={[
         ["Запитів", uah(t.pipelineCount), short(t.pipeline) + " ₴ пайплайн", "", "var(--peri)"],
         ["Виграно", uah(t.wonCount), `win rate ${pct(t.wonCount, t.wonCount + t.lostCount).toFixed(0)}%`, "", "var(--blue)"],
         ["Програно", uah(t.lostCount), short(t.lost) + " ₴ втрачено", "dn", "var(--peri)"],
@@ -515,8 +677,12 @@ function DealsView({ deals, spend, margin, months }: {
         ["Прибуток", short(t.won * margin) + " ₴", `маржа ${(margin * 100).toFixed(2)}%`, "", "var(--blue)"],
         ["Витрати", uah(totalCost) + " ₴", "усі канали", "", "var(--peri)"],
         ["CAC", t.wonCount && totalCost ? uah(totalCost / t.wonCount) + " ₴" : "—", "", "", "var(--blue)"],
-      ]} />
-      <div className="grid">
+      ]} /></>,
+    },
+    {
+      id: "deals-by-source",
+      title: "Угоди за джерелом",
+      children: <div className="grid">
         <div className="card">
           <div className="ch">За джерелом</div>
           <table>
@@ -557,8 +723,12 @@ function DealsView({ deals, spend, margin, months }: {
             Оплата спеціаліста не рознесена по каналах і входить лише в загальний підсумок.
           </div>
         </div>
-      </div>
-      <div className="grid">
+      </div>,
+    },
+    {
+      id: "deals-by-month",
+      title: "Угоди за місяцями",
+      children: <div className="grid">
         <div className="card">
           <div className="ch">По місяцях</div>
           <table>
@@ -584,14 +754,17 @@ function DealsView({ deals, spend, margin, months }: {
             </tbody>
           </table>
         </div>
-      </div>
-    </>
-  );
+      </div>,
+    },
+  ];
+
+  return <EditableBlocks editor={editor} blocks={blocks} metrics={metrics} chartSeries={chartSeries} />;
 }
 
 /* -------------------------------- Sources -------------------------------- */
-function SourcesView({ deals, spend, meta, margin }: {
-  deals: MonthRow[]; spend: BudgetRow[]; meta: MetaRow[]; margin: number;
+function SourcesView({ deals, spend, meta, selectedSource, margin, editor, metrics, chartSeries }: {
+  deals: MonthRow[]; spend: BudgetRow[]; meta: MetaRow[]; selectedSource: string | null; margin: number;
+  editor: DashboardEditorController; metrics: DashboardFormulaMetric[]; chartSeries: DashboardChartSeries[];
 }) {
   const metaSpend = spend.filter((r) => r.channel === "meta").reduce((s, r) => s + r.amountUah, 0);
   const gadsSpend = spend.filter((r) => r.channel === "google_ads").reduce((s, r) => s + r.amountUah, 0);
@@ -604,11 +777,17 @@ function SourcesView({ deals, spend, meta, margin }: {
   const ppcWon = ppc.reduce((s, d) => s + d.won, 0);
   const orgWon = org.reduce((s, d) => s + d.won, 0);
   const months = [...new Set(deals.map((d) => d.month))].sort();
+  const showMeta = !selectedSource || selectedSource === "Instagram Paid";
+  const showGoogle = !selectedSource || selectedSource === "Google PPC" || selectedSource === "Google Organic";
 
-  return (
-    <>
+  const blocks: EditableBlockDefinition[] = [
+    {
+      id: "sources-overview",
+      title: "Рекламні джерела",
+      children: <>
       <h2 className="t">Джерела</h2>
       <div className="grid g11">
+        {showMeta && (
         <div className="card">
           <div className="ch">Meta Ads <small>Instagram Paid</small></div>
           <Kpis items={[
@@ -643,7 +822,9 @@ function SourcesView({ deals, spend, meta, margin }: {
             верхню межу.
           </div>
         </div>
+        )}
 
+        {showGoogle && (
         <div className="card">
           <div className="ch">Google <small>PPC та Organic</small></div>
           <Kpis items={[
@@ -681,15 +862,26 @@ function SourcesView({ deals, spend, meta, margin }: {
             </div>
           )}
         </div>
+        )}
+        {!showMeta && !showGoogle && (
+          <div className="card empty">Для цього джерела немає окремого рекламного кабінету.</div>
+        )}
       </div>
-      <div className="grid">
+      </>,
+    },
+    {
+      id: "sources-revenue",
+      title: "Виручка за джерелами",
+      children: <div className="grid">
         <div className="card">
           <div className="ch">Усі джерела за виручкою</div>
           <HBars rows={[...byKey(deals, "source", ["won"])].map(([k, v]) => [k, v.won] as [string, number])} />
         </div>
-      </div>
-    </>
-  );
+      </div>,
+    },
+  ];
+
+  return <EditableBlocks editor={editor} blocks={blocks} metrics={metrics} chartSeries={chartSeries} />;
 }
 
 /* --------------------------------- Charts -------------------------------- */
