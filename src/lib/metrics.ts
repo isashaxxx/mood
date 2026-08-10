@@ -1,5 +1,5 @@
 import { and, desc, gte, lte, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { budget, deals, leads, metaStats, syncLog } from "@/db/schema";
 import { WON, LOST } from "./taxonomy";
 
@@ -26,6 +26,7 @@ export type MonthRow = SourceRow & { month: string };
  * in August belongs to May, because May is the month marketing paid for it.
  */
 export async function dealsBySource(f: Filters): Promise<SourceRow[]> {
+  const db = getDb();
   const rows = await db
     .select({
       source: deals.source,
@@ -45,6 +46,7 @@ export async function dealsBySource(f: Filters): Promise<SourceRow[]> {
 }
 
 export async function dealsByMonth(f: Filters): Promise<MonthRow[]> {
+  const db = getDb();
   const rows = await db
     .select({
       month: deals.cohortMonth,
@@ -80,6 +82,7 @@ export type LeadRow = {
 };
 
 export async function leadBreakdown(f: Filters): Promise<LeadRow[]> {
+  const db = getDb();
   const rows = await db
     .select({
       month: leads.month,
@@ -114,6 +117,7 @@ export async function leadBreakdown(f: Filters): Promise<LeadRow[]> {
 }
 
 export async function spend(f: Filters) {
+  const db = getDb();
   const rows = await db
     .select({
       month: budget.month,
@@ -129,6 +133,7 @@ export async function spend(f: Filters) {
 }
 
 export async function meta(f: Filters) {
+  const db = getDb();
   return db
     .select()
     .from(metaStats)
@@ -137,6 +142,7 @@ export async function meta(f: Filters) {
 }
 
 export async function lastSync() {
+  const db = getDb();
   const [row] = await db.select().from(syncLog).orderBy(desc(syncLog.startedAt)).limit(1);
   return row ?? null;
 }
