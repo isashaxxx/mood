@@ -100,6 +100,7 @@ export async function leadBreakdown(f: Filters): Promise<LeadRow[]> {
     .groupBy(leads.month, leads.channel, leads.source);
   return rows.map((r) => ({
     ...r,
+    channel: r.channel ?? "Не вказано",
     total: Number(r.total),
     nql: Number(r.nql),
     iql: Number(r.iql),
