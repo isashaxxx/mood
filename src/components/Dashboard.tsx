@@ -50,6 +50,7 @@ const VIEWS: Array<[View, string]> = [
 export default function Dashboard() {
   const [data, setData] = useState<Payload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
   const [view, setView] = useState<View>("db");
@@ -60,11 +61,22 @@ export default function Dashboard() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/metrics", { cache: "no-store" });
-    const json: Payload = await res.json();
-    setData(json);
-    setLoading(false);
-    return json;
+    setLoadError(null);
+    try {
+      const res = await fetch("/api/metrics", { cache: "no-store" });
+      const json = await res.json().catch(() => null) as Payload | { error?: string } | null;
+      if (!res.ok || !json || !("currentMonth" in json)) {
+        throw new Error((json && "error" in json && json.error) || `Помилка завантаження (${res.status})`);
+      }
+      setData(json);
+      return json;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Не вдалося завантажити дані";
+      setLoadError(message);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -72,7 +84,7 @@ export default function Dashboard() {
       // Default view is the month in progress — that is what anyone opening
       // this at 9am actually wants to see.
       setMonths(new Set([json.currentMonth]));
-    });
+    }).catch(() => undefined);
   }, [load]);
 
   const allMonths = useMemo(() => {
@@ -160,6 +172,22 @@ export default function Dashboard() {
         <main>
           <div className="crumbs">Аналітика <span>/</span> <b>Dashboard</b></div>
           <div className="kpis">{[...Array(8)].map((_, i) => <div key={i} className="skeleton" />)}</div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="app">
+        <Sidebar view={view} setView={setView} />
+        <main className="error-state">
+          <div className="crumbs">Аналітика <span>/</span> <b>Dashboard</b></div>
+          <h1>Дані поки недоступні</h1>
+          <p>{loadError ?? "Не вдалося підключитися до бази даних."}</p>
+          <button className="refresh" onClick={() => load().catch(() => undefined)} disabled={loading}>
+            {loading ? "Завантажую…" : "Спробувати ще раз"}
+          </button>
         </main>
       </div>
     );
