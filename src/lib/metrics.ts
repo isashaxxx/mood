@@ -1,0 +1,163 @@
+import { and, desc, gte, lte, sql } from "drizzle-orm";
+import { db } from "@/db";
+import { budget, deals, leads, metaStats, syncLog } from "@/db/schema";
+import { WON, LOST } from "./taxonomy";
+
+export const MARGIN = Number(process.env.NEXT_PUBLIC_MARGIN ?? 0.1526);
+
+export type Filters = { from: string; to: string };
+
+export type SourceRow = {
+  source: string;
+  pipeline: number; // budget of every deal in the cohort, any stage
+  pipelineCount: number;
+  won: number;
+  wonCount: number;
+  lost: number;
+  lostCount: number;
+  avgCycleDays: number | null;
+};
+
+export type MonthRow = SourceRow & { month: string };
+
+/**
+ * Everything is measured on the COHORT month — the month the request arrived
+ * (Дата - Запит), not the month the deal closed. A deal opened in May and won
+ * in August belongs to May, because May is the month marketing paid for it.
+ */
+export async function dealsBySource(f: Filters): Promise<SourceRow[]> {
+  const rows = await db
+    .select({
+      source: deals.source,
+      pipeline: sql<number>`coalesce(sum(${deals.budget}), 0)`,
+      pipelineCount: sql<number>`count(*)`,
+      won: sql<number>`coalesce(sum(${deals.budget}) filter (where ${deals.stage} = ${WON}), 0)`,
+      wonCount: sql<number>`count(*) filter (where ${deals.stage} = ${WON})`,
+      lost: sql<number>`coalesce(sum(${deals.budget}) filter (where ${deals.stage} = ${LOST}), 0)`,
+      lostCount: sql<number>`count(*) filter (where ${deals.stage} = ${LOST})`,
+      avgCycleDays: sql<number | null>`avg(${deals.wonAt} - ${deals.requestedAt}) filter (where ${deals.stage} = ${WON} and ${deals.requestedAt} is not null)`,
+    })
+    .from(deals)
+    .where(and(gte(deals.cohortMonth, f.from), lte(deals.cohortMonth, f.to)))
+    .groupBy(deals.source)
+    .orderBy(sql`2 desc`);
+  return rows.map(cast);
+}
+
+export async function dealsByMonth(f: Filters): Promise<MonthRow[]> {
+  const rows = await db
+    .select({
+      month: deals.cohortMonth,
+      source: deals.source,
+      pipeline: sql<number>`coalesce(sum(${deals.budget}), 0)`,
+      pipelineCount: sql<number>`count(*)`,
+      won: sql<number>`coalesce(sum(${deals.budget}) filter (where ${deals.stage} = ${WON}), 0)`,
+      wonCount: sql<number>`count(*) filter (where ${deals.stage} = ${WON})`,
+      lost: sql<number>`coalesce(sum(${deals.budget}) filter (where ${deals.stage} = ${LOST}), 0)`,
+      lostCount: sql<number>`count(*) filter (where ${deals.stage} = ${LOST})`,
+      avgCycleDays: sql<number | null>`avg(${deals.wonAt} - ${deals.requestedAt}) filter (where ${deals.stage} = ${WON} and ${deals.requestedAt} is not null)`,
+    })
+    .from(deals)
+    .where(and(gte(deals.cohortMonth, f.from), lte(deals.cohortMonth, f.to)))
+    .groupBy(deals.cohortMonth, deals.source)
+    .orderBy(deals.cohortMonth);
+  return rows.map((r) => ({ ...cast(r), month: r.month }));
+}
+
+export type LeadRow = {
+  month: string;
+  channel: string;
+  source: string;
+  total: number;
+  nql: number;
+  iql: number;
+  mql: number;
+  sql_: number;
+  junk: number;
+  toSales: number;
+  handlingHours: number | null;
+  handlingCount: number;
+};
+
+export async function leadBreakdown(f: Filters): Promise<LeadRow[]> {
+  const rows = await db
+    .select({
+      month: leads.month,
+      channel: leads.channel,
+      source: leads.source,
+      total: sql<number>`count(*)`,
+      nql: sql<number>`count(*) filter (where ${leads.qualification} = 'NQL')`,
+      iql: sql<number>`count(*) filter (where ${leads.qualification} = 'IQL')`,
+      mql: sql<number>`count(*) filter (where ${leads.qualification} = 'MQL')`,
+      sql_: sql<number>`count(*) filter (where ${leads.qualification} = 'SQL')`,
+      junk: sql<number>`count(*) filter (where ${leads.stage} in ('Спам','Нецільовий'))`,
+      toSales: sql<number>`count(*) filter (where ${leads.stage} = 'Передано Sales')`,
+      handlingHours: sql<number | null>`avg(${leads.handlingHours})`,
+      handlingCount: sql<number>`count(${leads.handlingHours})`,
+    })
+    .from(leads)
+    .where(and(gte(leads.month, f.from), lte(leads.month, f.to)))
+    .groupBy(leads.month, leads.channel, leads.source);
+  return rows.map((r) => ({
+    ...r,
+    total: Number(r.total),
+    nql: Number(r.nql),
+    iql: Number(r.iql),
+    mql: Number(r.mql),
+    sql_: Number(r.sql_),
+    junk: Number(r.junk),
+    toSales: Number(r.toSales),
+    handlingHours: r.handlingHours === null ? null : Number(r.handlingHours),
+    handlingCount: Number(r.handlingCount),
+  }));
+}
+
+export async function spend(f: Filters) {
+  const rows = await db
+    .select({
+      month: budget.month,
+      channel: budget.channel,
+      amountUah: budget.amountUah,
+      amountUsd: budget.amountUsd,
+      fxRate: budget.fxRate,
+    })
+    .from(budget)
+    .where(and(gte(budget.month, f.from), lte(budget.month, f.to)))
+    .orderBy(budget.month);
+  return rows;
+}
+
+export async function meta(f: Filters) {
+  return db
+    .select()
+    .from(metaStats)
+    .where(and(gte(metaStats.month, f.from), lte(metaStats.month, f.to)))
+    .orderBy(metaStats.month);
+}
+
+export async function lastSync() {
+  const [row] = await db.select().from(syncLog).orderBy(desc(syncLog.startedAt)).limit(1);
+  return row ?? null;
+}
+
+/** postgres returns numerics as strings; normalise once at the boundary. */
+function cast<T extends Record<string, unknown>>(r: T) {
+  return {
+    ...r,
+    pipeline: Number(r.pipeline),
+    pipelineCount: Number(r.pipelineCount),
+    won: Number(r.won),
+    wonCount: Number(r.wonCount),
+    lost: Number(r.lost),
+    lostCount: Number(r.lostCount),
+    avgCycleDays: r.avgCycleDays === null ? null : Number(r.avgCycleDays),
+  } as unknown as SourceRow;
+}
+
+/** Which spend line belongs to which normalised source. */
+export const SPEND_TO_SOURCE: Record<string, string | null> = {
+  meta: "Instagram Paid",
+  google_ads: "Google PPC",
+  seo: "Google Organic",
+  specialist: null, // overhead — counted in the total, never per channel
+};

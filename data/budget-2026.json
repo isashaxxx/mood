@@ -1,0 +1,34 @@
+{
+  "budget": [
+    { "month": "2026-01", "channel": "meta",       "amountUah": 12410,    "amountUsd": 289,  "fxRate": 42.9333 },
+    { "month": "2026-02", "channel": "meta",       "amountUah": 16254,    "amountUsd": 377,  "fxRate": 43.1324 },
+    { "month": "2026-03", "channel": "meta",       "amountUah": 29406,    "amountUsd": 671,  "fxRate": 43.8314 },
+    { "month": "2026-04", "channel": "meta",       "amountUah": 65202,    "amountUsd": 1490, "fxRate": 43.7514 },
+    { "month": "2026-05", "channel": "meta",       "amountUah": 81138,    "amountUsd": 1842, "fxRate": 44.0597 },
+    { "month": "2026-06", "channel": "meta",       "amountUah": 37283,    "amountUsd": 834,  "fxRate": 44.729  },
+    { "month": "2026-07", "channel": "meta",       "amountUah": 10288,    "amountUsd": 230,  "fxRate": 44.7024 },
+    { "month": "2026-01", "channel": "google_ads", "amountUah": 3071.39 },
+    { "month": "2026-02", "channel": "google_ads", "amountUah": 12491.56 },
+    { "month": "2026-03", "channel": "google_ads", "amountUah": 12858.12 },
+    { "month": "2026-04", "channel": "google_ads", "amountUah": 18240.12 },
+    { "month": "2026-05", "channel": "google_ads", "amountUah": 23287.13 },
+    { "month": "2026-06", "channel": "google_ads", "amountUah": 17407.64 },
+    { "month": "2026-07", "channel": "google_ads", "amountUah": 6719.25 },
+    { "month": "2026-03", "channel": "seo",        "amountUah": 16000 },
+    { "month": "2026-01", "channel": "specialist", "amountUah": 21200 },
+    { "month": "2026-02", "channel": "specialist", "amountUah": 21200 },
+    { "month": "2026-03", "channel": "specialist", "amountUah": 21200 },
+    { "month": "2026-04", "channel": "specialist", "amountUah": 21200 },
+    { "month": "2026-05", "channel": "specialist", "amountUah": 21200 }
+  ],
+  "meta": [
+    { "month": "2026-01", "spendUsd": 289.06,  "impressions": 31786,  "reach": 15677,  "clicks": 593,  "conversations": 55 },
+    { "month": "2026-02", "spendUsd": 376.85,  "impressions": 43356,  "reach": 18724,  "clicks": 959,  "conversations": 75 },
+    { "month": "2026-03", "spendUsd": 670.89,  "impressions": 79595,  "reach": 36035,  "clicks": 1304, "conversations": 109 },
+    { "month": "2026-04", "spendUsd": 1490.28, "impressions": 174903, "reach": 101578, "clicks": 2440, "conversations": 122 },
+    { "month": "2026-05", "spendUsd": 1841.54, "impressions": 164669, "reach": 85457,  "clicks": 2097, "conversations": 146 },
+    { "month": "2026-06", "spendUsd": 833.52,  "impressions": 76890,  "reach": 48708,  "clicks": 1045, "conversations": 74 },
+    { "month": "2026-07", "spendUsd": 230.14,  "impressions": 150084, "reach": 133511, "clicks": 422,  "conversations": 36 },
+    { "month": "2026-08", "spendUsd": 247.92,  "impressions": 138933, "reach": 123609, "clicks": 502,  "conversations": 25 }
+  ]
+}
