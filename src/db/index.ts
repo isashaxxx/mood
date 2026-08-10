@@ -25,7 +25,15 @@ export function getDb() {
     process.env.DATABASE_URL_POSTGRES_URL ??
     process.env.DATABASE_URL_POSTGRES_URL_NON_POOLING ??
     process.env.DATABASE_URL_UNPOOLED;
-  if (!url) throw new Error("No configured Neon database URL was found");
+  if (!url) {
+    const checked = [
+      "DATABASE_URL", "STORAGE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL",
+      "POSTGRES_URL_NON_POOLING", "DATABASE_URL_DATABASE_URL",
+      "DATABASE_URL_POSTGRES_URL", "DATABASE_URL_POSTGRES_URL_NON_POOLING", "DATABASE_URL_UNPOOLED",
+    ];
+    console.error("Database environment availability", Object.fromEntries(checked.map((key) => [key, Boolean(process.env[key])] )));
+    throw new Error("No configured Postgres database URL was found");
+  }
 
   const client = postgres(url, { max: 1, prepare: false });
   database = drizzle(client, { schema });
