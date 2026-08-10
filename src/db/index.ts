@@ -14,6 +14,10 @@ export function getDb() {
   const url =
     process.env.DATABASE_URL ??
     process.env.STORAGE_URL ??
+    // Vercel's Supabase integration exposes Postgres under these standard names.
+    process.env.POSTGRES_URL ??
+    process.env.POSTGRES_PRISMA_URL ??
+    process.env.POSTGRES_URL_NON_POOLING ??
     process.env.DATABASE_URL_DATABASE_URL ??
     // Vercel's Neon integration prefixes its generated connection variables
     // with the integration name. Keep the generic names first, then support
