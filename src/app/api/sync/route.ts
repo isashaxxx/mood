@@ -3,17 +3,18 @@ import { revalidatePath } from "next/cache";
 import { runSync } from "@/lib/sync";
 
 export const runtime = "nodejs";
-export const maxDuration = 300; // a cold full sync walks every folder page
+// Vercel Hobby allows a maximum 60-second function. The initial full import is
+// deliberately run with scripts/sync-cli.ts locally; Vercel only runs deltas.
+export const maxDuration = 60;
 
 function authorised(req: Request): boolean {
-  const secret = process.env.SYNC_SECRET;
-  if (!secret) return false;
-  const url = new URL(req.url);
-  // Vercel cron sends its own bearer; the UI button sends the shared secret.
+  const secrets = [process.env.SYNC_SECRET, process.env.CRON_SECRET].filter(
+    (value): value is string => Boolean(value)
+  );
+  if (!secrets.length) return false;
+  // The dashboard button uses SYNC_SECRET; Vercel Cron sends CRON_SECRET as a bearer token.
   const header = req.headers.get("authorization");
-  if (header === `Bearer ${secret}`) return true;
-  if (url.searchParams.get("cron") === "1" && req.headers.get("x-vercel-cron")) return true;
-  return false;
+  return secrets.some((secret) => header === `Bearer ${secret}`);
 }
 
 export async function POST(req: Request) {
@@ -23,6 +24,13 @@ export async function POST(req: Request) {
   const url = new URL(req.url);
   const full = url.searchParams.get("full") === "1";
   const trigger = url.searchParams.get("cron") === "1" ? "cron" : "manual";
+
+  if (full && process.env.VERCEL) {
+    return NextResponse.json(
+      { error: "Повний імпорт запускайте локально: npx tsx scripts/sync-cli.ts --full" },
+      { status: 400 }
+    );
+  }
 
   try {
     const result = await runSync({ trigger, full });
