@@ -448,7 +448,14 @@ function DealsView({ deals, spend, margin, months }: {
     const cost = costBySource.get(source) ?? 0;
     const cycles = deals.filter((d) => d.source === source && d.avgCycleDays !== null);
     return {
-      source, ...v, cost,
+      source,
+      pipeline: v.pipeline,
+      pipelineCount: v.pipelineCount,
+      won: v.won,
+      wonCount: v.wonCount,
+      lost: v.lost,
+      lostCount: v.lostCount,
+      cost,
       winrate: pct(v.wonCount, v.wonCount + v.lostCount),
       avg: v.wonCount ? v.won / v.wonCount : 0,
       cycle: cycles.length ? cycles.reduce((s, c) => s + (c.avgCycleDays ?? 0), 0) / cycles.length : null,
