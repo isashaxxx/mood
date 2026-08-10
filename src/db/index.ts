@@ -11,9 +11,10 @@ let database: ReturnType<typeof drizzle<typeof schema>> | undefined;
 export function getDb() {
   if (database) return database;
 
-  // Bracket access keeps Next.js from replacing server secrets with build-time
-  // values. Vercel Storage integrations inject these at function runtime.
-  const env = (key: string) => process.env[key];
+  // Access via globalThis keeps Next.js from replacing server secrets with
+  // build-time values. Vercel Storage injects them only at function runtime.
+  const runtimeEnv = (globalThis as typeof globalThis & { process: NodeJS.Process }).process.env;
+  const env = (key: string): string | undefined => Reflect.get(runtimeEnv, key) as string | undefined;
   const url =
     env("DATABASE_URL") ??
     env("STORAGE_URL") ??
