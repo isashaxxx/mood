@@ -15,14 +15,14 @@ export function getDb() {
   // values only when the function starts, not while Next.js builds the app.
   const env = (key: string): string | undefined => process.env[key];
   const url =
-    env("DATABASE_URL") ??
-    env("STORAGE_URL") ??
-    env("POSTGRES_URL") ??
-    env("POSTGRES_PRISMA_URL") ??
-    env("POSTGRES_URL_NON_POOLING") ??
-    env("DATABASE_URL_DATABASE_URL") ??
-    env("DATABASE_URL_POSTGRES_URL") ??
-    env("DATABASE_URL_POSTGRES_URL_NON_POOLING") ??
+    env("DATABASE_URL") ||
+    env("STORAGE_URL") ||
+    env("POSTGRES_URL") ||
+    env("POSTGRES_PRISMA_URL") ||
+    env("POSTGRES_URL_NON_POOLING") ||
+    env("DATABASE_URL_DATABASE_URL") ||
+    env("DATABASE_URL_POSTGRES_URL") ||
+    env("DATABASE_URL_POSTGRES_URL_NON_POOLING") ||
     env("DATABASE_URL_UNPOOLED");
 
   if (!url) {
