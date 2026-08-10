@@ -7,10 +7,11 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { sql } from "drizzle-orm";
-import { db } from "../src/db";
+import { getDb } from "../src/db";
 import { budget, metaStats } from "../src/db/schema";
 
 async function main() {
+  const db = getDb();
   const raw = JSON.parse(readFileSync(join(process.cwd(), "data/budget-2026.json"), "utf8"));
 
   await db
