@@ -217,7 +217,7 @@ function* chunks<T>(arr: T[], size: number) {
  * Builds the "overwrite every column except the primary key" SET clause for an
  * upsert, reading the incoming values from Postgres' `excluded` pseudo-table.
  */
-function rest(table: Record<string, unknown>, skip: string): Record<string, unknown> {
+function rest<T extends object>(table: T, skip: Extract<keyof T, string>): Record<string, unknown> {
   const set: Record<string, unknown> = {};
   for (const [key, col] of Object.entries(table)) {
     const name = (col as { name?: string } | null)?.name;
