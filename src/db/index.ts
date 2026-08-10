@@ -11,31 +11,21 @@ let database: ReturnType<typeof drizzle<typeof schema>> | undefined;
 export function getDb() {
   if (database) return database;
 
-  // Access via globalThis keeps Next.js from replacing server secrets with
-  // build-time values. Vercel Storage injects them only at function runtime.
-  const runtimeEnv = (globalThis as typeof globalThis & { process: NodeJS.Process }).process.env;
-  const env = (key: string): string | undefined => Reflect.get(runtimeEnv, key) as string | undefined;
+  // Bracket access keeps server variables dynamic. Vercel Storage adds these
+  // values only when the function starts, not while Next.js builds the app.
+  const env = (key: string): string | undefined => process.env[key];
   const url =
     env("DATABASE_URL") ??
     env("STORAGE_URL") ??
-    // Vercel's Supabase integration exposes Postgres under these standard names.
     env("POSTGRES_URL") ??
     env("POSTGRES_PRISMA_URL") ??
     env("POSTGRES_URL_NON_POOLING") ??
     env("DATABASE_URL_DATABASE_URL") ??
-    // Vercel's Neon integration prefixes its generated connection variables
-    // with the integration name. Keep the generic names first, then support
-    // the generated pooled and non-pooled URLs.
     env("DATABASE_URL_POSTGRES_URL") ??
     env("DATABASE_URL_POSTGRES_URL_NON_POOLING") ??
     env("DATABASE_URL_UNPOOLED");
+
   if (!url) {
-    const checked = [
-      "DATABASE_URL", "STORAGE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL",
-      "POSTGRES_URL_NON_POOLING", "DATABASE_URL_DATABASE_URL",
-      "DATABASE_URL_POSTGRES_URL", "DATABASE_URL_POSTGRES_URL_NON_POOLING", "DATABASE_URL_UNPOOLED",
-    ];
-    console.error("Database environment availability", Object.fromEntries(checked.map((key) => [key, Boolean(env(key))] )));
     throw new Error("No configured Postgres database URL was found");
   }
 
