@@ -14,17 +14,25 @@ export async function GET(req: Request) {
     to: url.searchParams.get("to") ?? now,
   };
 
-  const [bySource, byMonth, leads, budget, metaRows, sync] = await Promise.all([
-    dealsBySource(f), dealsByMonth(f), leadBreakdown(f), spend(f), meta(f), lastSync(),
-  ]);
+  try {
+    const [bySource, byMonth, leads, budget, metaRows, sync] = await Promise.all([
+      dealsBySource(f), dealsByMonth(f), leadBreakdown(f), spend(f), meta(f), lastSync(),
+    ]);
 
-  return NextResponse.json({
-    filters: f, margin: MARGIN, currentMonth: now,
-    bySource, byMonth, leads, budget, meta: metaRows,
-    sync: sync && {
-      finishedAt: sync.finishedAt, status: sync.status, trigger: sync.trigger,
-      dealsUpserted: sync.dealsUpserted, leadsUpserted: sync.leadsUpserted,
-      unknownSources: sync.unknownSources ? JSON.parse(sync.unknownSources) : [],
-    },
-  });
+    return NextResponse.json({
+      filters: f, margin: MARGIN, currentMonth: now,
+      bySource, byMonth, leads, budget, meta: metaRows,
+      sync: sync && {
+        finishedAt: sync.finishedAt, status: sync.status, trigger: sync.trigger,
+        dealsUpserted: sync.dealsUpserted, leadsUpserted: sync.leadsUpserted,
+        unknownSources: sync.unknownSources ? JSON.parse(sync.unknownSources) : [],
+      },
+    });
+  } catch (error) {
+    console.error("Metrics API failed", error);
+    return NextResponse.json(
+      { error: "Дані недоступні. Перевірте підключення бази даних та первинну синхронізацію." },
+      { status: 503 }
+    );
+  }
 }
