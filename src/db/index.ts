@@ -11,8 +11,11 @@ let database: ReturnType<typeof drizzle<typeof schema>> | undefined;
 export function getDb() {
   if (database) return database;
 
-  const url = process.env.DATABASE_URL ?? process.env.STORAGE_URL;
-  if (!url) throw new Error("DATABASE_URL or STORAGE_URL is not set");
+  const url =
+    process.env.DATABASE_URL ??
+    process.env.STORAGE_URL ??
+    process.env.DATABASE_URL_DATABASE_URL;
+  if (!url) throw new Error("No configured Neon database URL was found");
 
   const client = postgres(url, { max: 1, prepare: false });
   database = drizzle(client, { schema });
