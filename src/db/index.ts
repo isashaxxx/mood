@@ -14,7 +14,13 @@ export function getDb() {
   const url =
     process.env.DATABASE_URL ??
     process.env.STORAGE_URL ??
-    process.env.DATABASE_URL_DATABASE_URL;
+    process.env.DATABASE_URL_DATABASE_URL ??
+    // Vercel's Neon integration prefixes its generated connection variables
+    // with the integration name. Keep the generic names first, then support
+    // the generated pooled and non-pooled URLs.
+    process.env.DATABASE_URL_POSTGRES_URL ??
+    process.env.DATABASE_URL_POSTGRES_URL_NON_POOLING ??
+    process.env.DATABASE_URL_UNPOOLED;
   if (!url) throw new Error("No configured Neon database URL was found");
 
   const client = postgres(url, { max: 1, prepare: false });
