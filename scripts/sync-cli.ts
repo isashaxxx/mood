@@ -9,7 +9,7 @@ const full = process.argv.includes("--full");
 
 runSync({ trigger: "manual", full })
   .then((r) => {
-    console.log(`deals: ${r.dealsUpserted}, leads: ${r.leadsUpserted}, outbound skipped: ${r.skippedOutbound}`);
+    console.log(`deals: ${r.dealsUpserted}, leads: ${r.leadsUpserted}, outside Inbound view: ${r.skippedOutsideInbound}`);
     if (r.unknownSources.length) console.warn("Джерела поза мапінгом:", r.unknownSources.join(", "));
     process.exit(0);
   })
