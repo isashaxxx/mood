@@ -6,9 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "db:push": "drizzle-kit push",
-    "db:seed": "tsx scripts/seed-budget.ts",
-    "sync": "tsx scripts/sync-cli.ts"
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "drizzle-orm": "^0.36.4",
