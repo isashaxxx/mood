@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { budget, deals, leads, metaStats, syncLog } from "@/db/schema";
-import { WON, LOST } from "./taxonomy";
+import { WON, LOST, OPEN_STAGES } from "./taxonomy";
 import type { MetricsFilters } from "./metrics-filters";
 
 export const MARGIN = Number(process.env.NEXT_PUBLIC_MARGIN ?? 0.1526);
@@ -21,6 +21,19 @@ export type SourceRow = {
 
 export type MonthRow = SourceRow & { month: string };
 
+/** One company, one source and one reporting month. The client decides which
+ * exact month/source is active, so the table follows the same filters as KPI
+ * cards instead of silently mixing companies from other selections. */
+export type ClientRow = {
+  month: string;
+  source: string;
+  company: string;
+  won: number;
+  wonCount: number;
+  openPipeline: number;
+  openCount: number;
+};
+
 /**
  * Everything is measured on the COHORT month — the month the request arrived
  * (Дата - Запит), not the month the deal closed. A deal opened in May and won
@@ -31,8 +44,10 @@ export async function dealsBySource(f: Filters): Promise<SourceRow[]> {
   const rows = await db
     .select({
       source: deals.source,
-      pipeline: sql<number>`coalesce(sum(${deals.budget}), 0)`,
-      pipelineCount: sql<number>`count(*)`,
+      // Pipeline is only the live part of the funnel. Won and lost deals are
+      // revenue/history, not an amount a sales manager can still close.
+      pipeline: sql<number>`coalesce(sum(${deals.budget}) filter (where ${inArray(deals.stage, OPEN_STAGES)}), 0)`,
+      pipelineCount: sql<number>`count(*) filter (where ${inArray(deals.stage, OPEN_STAGES)})`,
       won: sql<number>`coalesce(sum(${deals.budget}) filter (where ${deals.stage} = ${WON}), 0)`,
       wonCount: sql<number>`count(*) filter (where ${deals.stage} = ${WON})`,
       lost: sql<number>`coalesce(sum(${deals.budget}) filter (where ${deals.stage} = ${LOST}), 0)`,
@@ -56,8 +71,8 @@ export async function dealsByMonth(f: Filters): Promise<MonthRow[]> {
     .select({
       month: deals.cohortMonth,
       source: deals.source,
-      pipeline: sql<number>`coalesce(sum(${deals.budget}), 0)`,
-      pipelineCount: sql<number>`count(*)`,
+      pipeline: sql<number>`coalesce(sum(${deals.budget}) filter (where ${inArray(deals.stage, OPEN_STAGES)}), 0)`,
+      pipelineCount: sql<number>`count(*) filter (where ${inArray(deals.stage, OPEN_STAGES)})`,
       won: sql<number>`coalesce(sum(${deals.budget}) filter (where ${deals.stage} = ${WON}), 0)`,
       wonCount: sql<number>`count(*) filter (where ${deals.stage} = ${WON})`,
       lost: sql<number>`coalesce(sum(${deals.budget}) filter (where ${deals.stage} = ${LOST}), 0)`,
@@ -73,6 +88,40 @@ export async function dealsByMonth(f: Filters): Promise<MonthRow[]> {
     .groupBy(deals.cohortMonth, deals.source)
     .orderBy(deals.cohortMonth);
   return rows.map((r) => ({ ...cast(r), month: r.month }));
+}
+
+/**
+ * Company-level figures for the "Top clients" card. Revenue is deliberately
+ * limited to won deals, while the second number is an open sales opportunity.
+ * That keeps prospects and lost deals out of a customer-revenue ranking.
+ */
+export async function clientsByMonth(f: Filters): Promise<ClientRow[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      month: deals.cohortMonth,
+      source: deals.source,
+      company: sql<string>`coalesce(nullif(trim(${deals.company}), ''), 'Без назви')`,
+      won: sql<number>`coalesce(sum(${deals.budget}) filter (where ${deals.stage} = ${WON}), 0)`,
+      wonCount: sql<number>`count(*) filter (where ${deals.stage} = ${WON})`,
+      openPipeline: sql<number>`coalesce(sum(${deals.budget}) filter (where ${inArray(deals.stage, OPEN_STAGES)}), 0)`,
+      openCount: sql<number>`count(*) filter (where ${inArray(deals.stage, OPEN_STAGES)})`,
+    })
+    .from(deals)
+    .where(
+      f.source
+        ? and(gte(deals.cohortMonth, f.from), lte(deals.cohortMonth, f.to), eq(deals.source, f.source))
+        : and(gte(deals.cohortMonth, f.from), lte(deals.cohortMonth, f.to))
+    )
+    .groupBy(deals.cohortMonth, deals.source, deals.company);
+
+  return rows.map((row) => ({
+    ...row,
+    won: Number(row.won),
+    wonCount: Number(row.wonCount),
+    openPipeline: Number(row.openPipeline),
+    openCount: Number(row.openCount),
+  }));
 }
 
 export type LeadRow = {
