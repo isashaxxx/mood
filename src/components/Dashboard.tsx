@@ -141,7 +141,9 @@ export default function Dashboard({ user }: { user: string }) {
     setSyncing(true);
     setFlash(null);
     try {
-      const res = await fetch("/api/sync", {
+      // A dashboard refresh rebuilds the 2026 mirror from the exact saved
+      // NetHunt Inbound scope, so records removed from that view cannot linger.
+      const res = await fetch("/api/sync?full=1", {
         method: "POST",
       });
       const json = await res.json();
@@ -335,7 +337,7 @@ export default function Dashboard({ user }: { user: string }) {
               </button>
             </div>
           </div>
-          <Chips label="Місяць" items={allMonths} selected={selectedMonth} cls=""
+          <Chips label="Місяць створення" items={allMonths} selected={selectedMonth} cls=""
             render={label}
             choose={setSelectedMonth} />
           <Chips label="Джерело" items={allSources} selected={selectedSource} cls="s"
