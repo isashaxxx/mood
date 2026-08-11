@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { deals, leads, syncLog } from "@/db/schema";
 import { fetchNewRecords, fetchUpdatedRecords, type NetHuntRecord } from "./nethunt";
@@ -14,6 +14,17 @@ const str = (v: unknown): string | null => {
   const s = String(v).trim();
   return s === "" ? null : s;
 };
+/** Multi-select NetHunt fields (channels, tags, reasons) arrive as arrays.
+ * Keep every value here: checking only the first tag could accidentally let an
+ * outbound record into the inbound view. */
+const strings = (value: unknown): string[] => {
+  if (value == null) return [];
+  if (Array.isArray(value)) return value.flatMap(strings);
+  const item = String(value).trim();
+  return item ? [item] : [];
+};
+const has = (values: string[], expected: string) =>
+  values.some((value) => value.localeCompare(expected, "uk", { sensitivity: "accent" }) === 0);
 const num = (v: unknown): number => {
   const n = typeof v === "number" ? v : parseFloat(String(v ?? "").replace(/\s/g, "").replace(",", "."));
   return Number.isFinite(n) ? n : 0;
@@ -25,16 +36,54 @@ const day = (v: unknown): string | null => {
   return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 };
 const monthOf = (d: string | null): string | null => (d ? d.slice(0, 7) : null);
+/** NetHunt resolves its relative Created filter in the workspace timezone. */
+const monthInKyiv = (date: Date): string | null => {
+  if (Number.isNaN(date.getTime())) return null;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Kyiv", year: "numeric", month: "2-digit",
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  return year && month ? `${year}-${month}` : null;
+};
+const REPORTING_YEAR = "2026";
 
 export type SyncResult = {
   dealsUpserted: number;
   leadsUpserted: number;
   unknownSources: string[];
-  skippedOutbound: number;
+  skippedOutsideInbound: number;
 };
+
+/**
+ * Reproduces the saved NetHunt view "Inbound угоди".
+ *
+ * The view itself is "Created this month". We retain all 2026 records that
+ * meet its other conditions and group them by their Created month below, so
+ * changing a month in the dashboard is exactly equivalent to changing the
+ * NetHunt view's relative Created filter to that month.
+ */
+function isInboundDeal(f: Record<string, unknown>): boolean {
+  const channel = strings(f["(Канал) How did they contact us?"]);
+  const source = strings(f["(Джерело) Where do they know us from?"] ?? f["Джерело"]);
+  const reason = strings(f["Привід"]);
+  const tags = strings(f["Теги"]);
+
+  return (
+    source.length > 0 &&
+    !has(channel, "Outbound sales") &&
+    !has(channel, "Outbound leadgen") &&
+    !has(source, "Outbound") &&
+    !has(source, "Аутбаунд") &&
+    !has(reason, "Супутні Витрати") &&
+    !has(tags, "Marketing PL")
+  );
+}
 
 function mapDeal(r: NetHuntRecord, unknown: Set<string>) {
   const f = r.fields;
+  if (!isInboundDeal(f)) return null;
+
   const rawSource = str(f["(Джерело) Where do they know us from?"] ?? f["Джерело"]);
   const { source, isOutbound, unknown: isUnknown } = normaliseSource(rawSource);
   if (isOutbound) return null; // outbound never enters marketing reporting
@@ -42,15 +91,14 @@ function mapDeal(r: NetHuntRecord, unknown: Set<string>) {
 
   const requestedAt = day(f["Дата - Запит"]);
   const createdAt = r.createdAt ? new Date(r.createdAt) : null;
+  const createdMonth = createdAt ? monthInKyiv(createdAt) : null;
+  if (!createdMonth || !createdMonth.startsWith(`${REPORTING_YEAR}-`)) return null;
   const wonAt = day(f["Дата - Виграні"]);
   const lostAt = day(f["Дата - Програні"]);
 
-  // The cohort is the month demand arrived. Falling back to the record's own
-  // creation date keeps deals that never got a "Дата - Запит" in the report
-  // instead of silently dropping them.
-  const cohortMonth =
-    monthOf(requestedAt) ?? monthOf(createdAt ? createdAt.toISOString().slice(0, 10) : null);
-  if (!cohortMonth) return null;
+  // The database column keeps its legacy name, but from this point it is the
+  // reporting month of the NetHunt saved view: Created, not Date - Request.
+  const cohortMonth = createdMonth;
 
   return {
     recordId: r.recordId ?? r.id,
@@ -134,9 +182,10 @@ async function lastSuccessfulSync(): Promise<Date | null> {
 /**
  * Pulls NetHunt into Postgres.
  *
- * First run (or `full: true`) walks the whole folder from 2024. Later runs only
- * ask for records changed since the last successful sync, with a 6-hour overlap
- * so a record edited mid-run isn't missed.
+ * A full run rebuilds the 2026 deal mirror from the exact "Inbound угоди"
+ * scope. Incremental runs only ask for records changed since the last
+ * successful sync, with a 6-hour overlap so a record edited mid-run isn't
+ * missed.
  */
 export async function runSync(opts: { trigger: "manual" | "cron"; full?: boolean }): Promise<SyncResult> {
   const db = getDb();
@@ -145,36 +194,67 @@ export async function runSync(opts: { trigger: "manual" | "cron"; full?: boolean
 
   try {
     const last = opts.full ? null : await lastSuccessfulSync();
-    const since = last ? new Date(last.getTime() - 6 * 3_600_000) : new Date("2024-01-01T00:00:00.000Z");
+    const since = last
+      ? new Date(last.getTime() - 6 * 3_600_000)
+      : new Date(`${REPORTING_YEAR}-01-01T00:00:00.000Z`);
     const fetcher = last ? fetchUpdatedRecords : fetchNewRecords;
 
     const [dealRecords, leadRecords] = await Promise.all([
       fetcher(DEALS_FOLDER(), since),
       fetcher(LEADS_FOLDER(), since),
     ]);
+    if (opts.full && dealRecords.length === 0) {
+      throw new Error("NetHunt returned no deal records; the existing mirror was left unchanged.");
+    }
 
     const unknown = new Set<string>();
-    let skippedOutbound = 0;
+    let skippedOutsideInbound = 0;
 
-    const dealRows = dealRecords
-      .filter((r) => !r.deleted)
-      .map((r) => {
-        const row = mapDeal(r, unknown);
-        if (!row) skippedOutbound++;
-        return row;
-      })
-      .filter((r): r is NonNullable<typeof r> => r !== null);
+    const excludedDealIds = new Set<string>();
+    const dealRows = dealRecords.flatMap((record) => {
+      const recordId = record.recordId ?? record.id;
+      if (record.deleted) {
+        excludedDealIds.add(recordId);
+        return [];
+      }
+      const row = mapDeal(record, unknown);
+      if (!row) {
+        skippedOutsideInbound++;
+        excludedDealIds.add(recordId);
+        return [];
+      }
+      return [row];
+    });
 
     const leadRows = leadRecords
       .filter((r) => !r.deleted)
       .map((r) => mapLead(r, unknown))
       .filter((r): r is NonNullable<typeof r> => r !== null);
 
-    for (const chunk of chunks(dealRows, 200)) {
-      await db
-        .insert(deals)
-        .values(chunk)
-        .onConflictDoUpdate({ target: deals.recordId, set: rest(deals, "recordId") as never });
+    if (opts.full) {
+      // Never leave the old broad-folder rows in place: they are precisely what
+      // caused the dashboard to show 240 records instead of the view's 104.
+      await db.transaction(async (tx) => {
+        await tx.delete(deals);
+        for (const chunk of chunks(dealRows, 200)) {
+          await tx
+            .insert(deals)
+            .values(chunk)
+            .onConflictDoUpdate({ target: deals.recordId, set: rest(deals, "recordId") as never });
+        }
+      });
+    } else {
+      // A record can leave the view when someone changes its source, tag or
+      // reason. Remove it from the local mirror instead of keeping stale data.
+      for (const chunk of chunks([...excludedDealIds], 200)) {
+        await db.delete(deals).where(inArray(deals.recordId, chunk));
+      }
+      for (const chunk of chunks(dealRows, 200)) {
+        await db
+          .insert(deals)
+          .values(chunk)
+          .onConflictDoUpdate({ target: deals.recordId, set: rest(deals, "recordId") as never });
+      }
     }
     for (const chunk of chunks(leadRows, 200)) {
       await db
@@ -187,7 +267,7 @@ export async function runSync(opts: { trigger: "manual" | "cron"; full?: boolean
       dealsUpserted: dealRows.length,
       leadsUpserted: leadRows.length,
       unknownSources: [...unknown],
-      skippedOutbound,
+      skippedOutsideInbound,
     };
 
     await db
