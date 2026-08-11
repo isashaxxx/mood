@@ -33,13 +33,14 @@ type LeadRow = {
   nql: number; iql: number; mql: number; sql_: number;
   junk: number; toSales: number; handlingHours: number | null; handlingCount: number;
 };
-type BudgetRow = { month: string; channel: string; amountUah: number; amountUsd: number | null; fxRate: number | null };
-type MetaRow = { month: string; spendUsd: number; impressions: number; reach: number; clicks: number; conversations: number };
 type Payload = {
-  margin: number; currentMonth: string;
+  currentMonth: string;
   bySource: SourceRow[]; byMonth: MonthRow[]; clients: ClientRow[]; leads: LeadRow[];
-  budget: BudgetRow[]; meta: MetaRow[];
-  sync: { finishedAt: string | null; status: string; dealsUpserted: number; leadsUpserted: number; unknownSources: string[] } | null;
+  sync: {
+    finishedAt: string; status: string; trigger: string;
+    dealsUpserted: number; leadsUpserted: number; unknownSources: string[];
+    sources: { deals: string; leads: string };
+  } | null;
 };
 
 const MN: Record<string, string> = {
@@ -52,15 +53,6 @@ const short = (n: number) =>
   Math.abs(n) >= 1e6 ? (n / 1e6).toFixed(2) + " млн" : Math.abs(n) >= 1e3 ? uah(n / 1e3) + "k" : uah(n);
 const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
 const colour = (s: string) => SOURCE_COLORS[s] ?? "#D9DEE4";
-const SPEND_LABEL: Record<string, string> = {
-  meta: "Meta", google_ads: "Google PPC", seo: "SEO", specialist: "Спеціаліст",
-};
-const BUDGET_SOURCE: Record<string, string | null> = {
-  meta: "Instagram Paid",
-  google_ads: "Google PPC",
-  seo: "Google Organic",
-  specialist: null,
-};
 
 type View = "db" | "ld" | "dl" | "sr";
 const VIEWS: Array<[View, string]> = [
@@ -84,9 +76,7 @@ export default function Dashboard({ user }: { user: string }) {
   const [data, setData] = useState<Payload | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [syncing, setSyncing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [flash, setFlash] = useState<string | null>(null);
   const [view, setView] = useState<View>("db");
   // A filter always means one exact value. The previous multi-select state
   // accidentally removed the clicked source from the full set, which made a
@@ -137,30 +127,6 @@ export default function Dashboard({ user }: { user: string }) {
     [data]
   );
 
-  async function refresh() {
-    setSyncing(true);
-    setFlash(null);
-    try {
-      // A dashboard refresh rebuilds the 2026 mirror from the exact saved
-      // NetHunt Inbound scope, so records removed from that view cannot linger.
-      const res = await fetch("/api/sync?full=1", {
-        method: "POST",
-      });
-      const json = await res.json();
-      if (!res.ok || !json.ok) throw new Error(json.error ?? "sync failed");
-      await load();
-      const unknown: string[] = json.unknownSources ?? [];
-      setFlash(
-        `Оновлено: ${json.dealsUpserted} угод, ${json.leadsUpserted} лідів.` +
-          (unknown.length ? ` Нові значення джерела: ${unknown.join(", ")}` : "")
-      );
-    } catch (e) {
-      setFlash(`Не вдалося оновити: ${String(e)}`);
-    } finally {
-      setSyncing(false);
-    }
-  }
-
   async function logout() {
     if (loggingOut) return;
     setLoggingOut(true);
@@ -187,15 +153,6 @@ export default function Dashboard({ user }: { user: string }) {
       ),
     [data, selectedMonth, selectedSource, selectedChannel]
   );
-  const spendRows = useMemo(
-    () =>
-      (data?.budget ?? []).filter(
-        (r) =>
-          (!selectedMonth || r.month === selectedMonth) &&
-          (!selectedSource || BUDGET_SOURCE[r.channel] === selectedSource)
-      ),
-    [data, selectedMonth, selectedSource]
-  );
   const clientRows = useMemo(
     () =>
       (data?.clients ?? []).filter(
@@ -211,11 +168,8 @@ export default function Dashboard({ user }: { user: string }) {
     const pipeline = deals.reduce((s, r) => s + r.pipeline, 0);
     const pipelineCount = deals.reduce((s, r) => s + r.pipelineCount, 0);
     const lost = deals.reduce((s, r) => s + r.lost, 0);
-    const cost = spendRows.reduce((s, r) => s + r.amountUah, 0);
-    const margin = data?.margin ?? 0.1526;
-    const grossProfit = won * margin;
-    return { won, wonCount, lostCount, pipeline, pipelineCount, lost, cost, grossProfit, profit: grossProfit - cost, margin };
-  }, [deals, spendRows, data]);
+    return { won, wonCount, lostCount, pipeline, pipelineCount, lost };
+  }, [deals]);
 
   const displayMonths = useMemo(
     () => (selectedMonth ? [selectedMonth] : allMonths),
@@ -227,18 +181,13 @@ export default function Dashboard({ user }: { user: string }) {
   });
   const editorMetrics = useMemo<DashboardFormulaMetric[]>(() => {
     const leadTotal = leadRows.reduce((sum, row) => sum + row.total, 0);
-    const romi = totals.cost ? (totals.profit / totals.cost) * 100 : 0;
     return [
       { id: "revenue", label: "Виручка", value: totals.won },
-      { id: "spend", label: "Витрати", value: totals.cost },
-      { id: "profit", label: "Прибуток", value: totals.profit },
       { id: "pipeline", label: "Пайплайн", value: totals.pipeline },
-      { id: "deals", label: "Угоди", value: totals.pipelineCount },
+      { id: "deals", label: "Відкриті угоди", value: totals.pipelineCount },
       { id: "won_deals", label: "Виграні угоди", value: totals.wonCount },
       { id: "lost_deals", label: "Програні угоди", value: totals.lostCount },
       { id: "leads", label: "Ліди", value: leadTotal },
-      { id: "romi", label: "ROMI", value: romi },
-      { id: "margin_percent", label: "Маржа", value: totals.margin * 100 },
     ];
   }, [leadRows, totals]);
   const editorChartSeries = useMemo<DashboardChartSeries[]>(() => {
@@ -251,17 +200,12 @@ export default function Dashboard({ user }: { user: string }) {
       label: label(month),
       value: leadRows.filter((row) => row.month === month).reduce((sum, row) => sum + row.total, 0),
     }));
-    const spendByMonth = displayMonths.map((month) => ({
-      label: label(month),
-      value: spendRows.filter((row) => row.month === month).reduce((sum, row) => sum + row.amountUah, 0),
-    }));
     const revenueBySource = new Map<string, number>();
     for (const row of deals) revenueBySource.set(row.source, (revenueBySource.get(row.source) ?? 0) + row.won);
     return [
       { id: "revenue_by_month", label: "Виручка за місяцями", points: byMonth((row) => row.won) },
       { id: "pipeline_by_month", label: "Пайплайн за місяцями", points: byMonth((row) => row.pipeline) },
       { id: "leads_by_month", label: "Ліди за місяцями", points: leadByMonth },
-      { id: "spend_by_month", label: "Витрати за місяцями", points: spendByMonth },
       {
         id: "revenue_by_source",
         label: "Виручка за джерелами",
@@ -270,7 +214,7 @@ export default function Dashboard({ user }: { user: string }) {
           .map(([source, value]) => ({ label: source, value })),
       },
     ];
-  }, [deals, displayMonths, leadRows, spendRows]);
+  }, [deals, displayMonths, leadRows]);
 
   if (loading && !data) {
     return (
@@ -291,7 +235,7 @@ export default function Dashboard({ user }: { user: string }) {
         <main className="error-state">
           <div className="crumbs">Аналітика <span>/</span> <b>Dashboard</b></div>
           <h1>Дані поки недоступні</h1>
-          <p>{loadError ?? "Не вдалося підключитися до бази даних."}</p>
+          <p>{loadError ?? "Не вдалося відкрити підготовлені Excel-дані."}</p>
           <button className="refresh" onClick={() => load().catch(() => undefined)} disabled={loading}>
             {loading ? "Завантажую…" : "Спробувати ще раз"}
           </button>
@@ -300,9 +244,12 @@ export default function Dashboard({ user }: { user: string }) {
     );
   }
 
-  const stamp = data?.sync?.finishedAt
+  const stamp = data.sync?.finishedAt
     ? new Date(data.sync.finishedAt).toLocaleString("uk-UA", { dateStyle: "short", timeStyle: "short" })
-    : "ще не синхронізовано";
+    : "дата не вказана";
+  const sourceLabel = data.sync?.sources
+    ? `${data.sync.sources.deals} + ${data.sync.sources.leads}`
+    : "Excel-бази 2026";
 
   return (
     <div className="app">
@@ -312,16 +259,11 @@ export default function Dashboard({ user }: { user: string }) {
           Аналітика <span>/</span> <b>{VIEWS.find(([v]) => v === view)?.[1]}</b>
           <div className="right">
             <span className="profile"><img src="/moodua-logo.png" alt="MOODua" />{user}</span>
-            <span>Оновлено {stamp}</span>
+            <span title={sourceLabel}>Excel · оновлено {stamp}</span>
             <button className="refresh" onClick={logout} disabled={loggingOut}>{loggingOut ? "Виходжу…" : "Вийти"}</button>
-            <button className="refresh" onClick={refresh} disabled={syncing}>
-              {syncing && <span className="spin" aria-hidden />}
-              {syncing ? "Оновлюю…" : "Оновити"}
-            </button>
             <DashboardEditToolbar editor={editor} className="top-editor-toolbar" />
           </div>
         </div>
-        {flash && <div className="warn" role="status">{flash}</div>}
 
         <div className="filters">
           <div className="fg">
@@ -348,10 +290,10 @@ export default function Dashboard({ user }: { user: string }) {
           )}
         </div>
 
-        {view === "db" && <DashboardView deals={deals} clients={clientRows} leads={leadRows} spend={spendRows} totals={totals} months={displayMonths} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
+        {view === "db" && <DashboardView deals={deals} clients={clientRows} leads={leadRows} totals={totals} months={displayMonths} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
         {view === "ld" && <LeadsView leads={leadRows} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
-        {view === "dl" && <DealsView deals={deals} spend={spendRows} margin={totals.margin} months={displayMonths} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
-        {view === "sr" && <SourcesView deals={deals} spend={spendRows} meta={data!.meta.filter((m) => (!selectedMonth || m.month === selectedMonth) && (!selectedSource || selectedSource === "Instagram Paid"))} selectedSource={selectedSource} margin={totals.margin} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
+        {view === "dl" && <DealsView deals={deals} months={displayMonths} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
+        {view === "sr" && <SourcesView deals={deals} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
         {editor.isEditing && <DashboardWidgetComposer editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
       </main>
     </div>
@@ -373,9 +315,8 @@ function Sidebar({ view, setView }: { view: View; setView: (v: View) => void }) 
       </nav>
       <div className="navlbl">Дані</div>
       <div className="nav">
-        <button className="static" type="button">NetHunt CRM</button>
-        <button className="static" type="button">Meta Ads</button>
-        <button className="static" type="button">Бюджет</button>
+        <button className="static" type="button">Угоди · 2026</button>
+        <button className="static" type="button">All leads · 2026</button>
       </div>
     </aside>
   );
@@ -474,17 +415,16 @@ function EditableBlocks({
 }
 
 /* ------------------------------- Dashboard ------------------------------- */
-function DashboardView({ deals, clients, leads, spend, totals, months, editor, metrics, chartSeries }: {
-  deals: MonthRow[]; clients: ClientRow[]; leads: LeadRow[]; spend: BudgetRow[];
+function DashboardView({ deals, clients, leads, totals, months, editor, metrics, chartSeries }: {
+  deals: MonthRow[]; clients: ClientRow[]; leads: LeadRow[];
   totals: ReturnType<typeof Object> & Record<string, number>; months: string[];
   editor: DashboardEditorController; metrics: DashboardFormulaMetric[]; chartSeries: DashboardChartSeries[];
 }) {
-  const romi = totals.cost ? (totals.profit / totals.cost) * 100 : 0;
   const leadTotal = leads.reduce((s, r) => s + r.total, 0);
+  const dealTotal = totals.pipelineCount + totals.wonCount + totals.lostCount;
   const perMonth = months.map((m) => ({
     m,
     won: deals.filter((r) => r.month === m).reduce((s, r) => s + r.won, 0),
-    cost: spend.filter((r) => r.month === m).reduce((s, r) => s + r.amountUah, 0),
   }));
   const src = byKey(deals, "source", ["won", "wonCount", "pipeline"]);
   const companies: Array<Pick<ClientRow, "company" | "won" | "wonCount" | "openPipeline" | "openCount">> =
@@ -510,14 +450,14 @@ function DashboardView({ deals, clients, leads, spend, totals, months, editor, m
       id: "dashboard-kpis",
       title: "Ключові показники",
       children: <><h2 className="t">Ключові показники</h2><Kpis items={[
-        ["Виручка", short(totals.won) + " ₴", `${totals.wonCount} угод`, "", "var(--blue)"],
-        ["Витрати", uah(totals.cost) + " ₴", "реклама + ведення", "", "var(--peri)"],
-        ["Прибуток", short(totals.profit) + " ₴", `після маркетингу · маржа ${(totals.margin * 100).toFixed(2)}%`, totals.profit >= 0 ? "up" : "dn", "var(--blue)"],
-        ["ROMI", totals.cost ? Math.round(romi) + "%" : "—", "поріг 0%", romi >= 0 ? "up" : "dn", "var(--peri)"],
+        ["Виручка", short(totals.won) + " ₴", `${totals.wonCount} виграних`, "", "var(--blue)"],
         ["Пайплайн", short(totals.pipeline) + " ₴", `${totals.pipelineCount} відкритих угод`, "", "var(--peri)"],
         ["Win rate", pct(totals.wonCount, totals.wonCount + totals.lostCount).toFixed(0) + "%", `${totals.lostCount} програно`, "", "var(--blue)"],
         ["Середній чек", totals.wonCount ? uah(totals.won / totals.wonCount) + " ₴" : "—", "лише виграні угоди", "", "var(--peri)"],
-        ["Лідів", uah(leadTotal), "з 13.06.2026", "", "var(--blue)"],
+        ["Лідів", uah(leadTotal), "з бази All leads", "", "var(--blue)"],
+        ["Угод у базі", uah(dealTotal), "за активним фільтром", "", "var(--peri)"],
+        ["Втрачено", short(totals.lost) + " ₴", `${totals.lostCount} програних`, "dn", "var(--blue)"],
+        ["Джерел", uah(src.size), "в угодах", "", "var(--peri)"],
       ]} /></>,
     },
     {
@@ -525,7 +465,7 @@ function DashboardView({ deals, clients, leads, spend, totals, months, editor, m
       title: "Виручка та джерела",
       children: <div className="grid g21">
         <div className="card">
-          <div className="ch">Виручка та витрати <small>по місяцю запиту</small></div>
+          <div className="ch">Виручка за місяцями <small>за місяцем створення угоди</small></div>
           <LineChart data={perMonth} />
         </div>
         <div className="card">
@@ -566,11 +506,15 @@ function DashboardView({ deals, clients, leads, spend, totals, months, editor, m
     },
     {
       id: "dashboard-funnel",
-      title: "Витрати та воронка",
+      title: "Воронка угод",
       children: <div className="grid g11">
         <div className="card">
-          <div className="ch">Витрати за каналами</div>
-          <Bars rows={[...byKey(spend, "channel", ["amountUah"])].map(([k, v]) => [SPEND_LABEL[k] ?? k, v.amountUah] as [string, number])} />
+          <div className="ch">Розподіл угод</div>
+          <Bars rows={[
+            ["Відкриті", totals.pipelineCount],
+            ["Виграні", totals.wonCount],
+            ["Програні", totals.lostCount],
+          ]} />
         </div>
         <div className="card">
           <div className="ch">Наскрізна воронка</div>
@@ -581,8 +525,8 @@ function DashboardView({ deals, clients, leads, spend, totals, months, editor, m
             ["Виграно", totals.wonCount],
           ]} />
           <div className="note">
-            Угода зараховується в місяць, коли надійшов запит, а не коли закрилась.
-            Аутбаунд виключено з усіх розрахунків.
+            Угоди зараховані в місяць створення в Excel-файлі. Дані беруться тільки з баз
+            «Угоди_2026» та «All leads».
           </div>
         </div>
       </div>,
@@ -672,8 +616,8 @@ function LeadsView({ leads, editor, metrics, chartSeries }: {
       id: "leads-note",
       title: "Пояснення до обробки",
       children: <div className="note">
-        Середній час обробки — проміжок від створення картки до останньої зміни. Окремого поля
-        «дата передачі в Sales» у NetHunt немає; щойно воно з’явиться, показник стане точним.
+        Середній час обробки — проміжок між «Created At» та «Updated At» у файлі All leads.
+        Це технічний орієнтир, а не окрема дата передачі в Sales.
       </div>,
     },
   ];
@@ -682,20 +626,14 @@ function LeadsView({ leads, editor, metrics, chartSeries }: {
 }
 
 /* --------------------------------- Deals --------------------------------- */
-function DealsView({ deals, spend, margin, months, editor, metrics, chartSeries }: {
-  deals: MonthRow[]; spend: BudgetRow[]; margin: number; months: string[];
+function DealsView({ deals, months, editor, metrics, chartSeries }: {
+  deals: MonthRow[]; months: string[];
   editor: DashboardEditorController; metrics: DashboardFormulaMetric[]; chartSeries: DashboardChartSeries[];
 }) {
   const [sortKey, setSortKey] = useState<string>("won");
   const [dir, setDir] = useState(-1);
-  const costBySource = new Map<string, number>();
-  for (const r of spend) {
-    const src = { meta: "Instagram Paid", google_ads: "Google PPC", seo: "Google Organic" }[r.channel];
-    if (src) costBySource.set(src, (costBySource.get(src) ?? 0) + r.amountUah);
-  }
   const map = byKey(deals, "source", ["pipeline", "pipelineCount", "won", "wonCount", "lost", "lostCount"]);
   const rows = [...map].map(([source, v]) => {
-    const cost = costBySource.get(source) ?? 0;
     const cycles = deals.filter((d) => d.source === source && d.avgCycleDays !== null);
     return {
       source,
@@ -705,21 +643,17 @@ function DealsView({ deals, spend, margin, months, editor, metrics, chartSeries 
       wonCount: v.wonCount,
       lost: v.lost,
       lostCount: v.lostCount,
-      cost,
       winrate: pct(v.wonCount, v.wonCount + v.lostCount),
       avg: v.wonCount ? v.won / v.wonCount : 0,
       cycle: cycles.length ? cycles.reduce((s, c) => s + (c.avgCycleDays ?? 0), 0) / cycles.length : null,
-      cac: v.wonCount && cost ? cost / v.wonCount : null,
-      romi: cost ? ((v.won * margin - cost) / cost) * 100 : null,
     };
   });
   rows.sort((a, b) => (((a as never as Record<string, number>)[sortKey] ?? -1) > ((b as never as Record<string, number>)[sortKey] ?? -1) ? 1 : -1) * dir);
   const t = rows.reduce((s, r) => ({
     pipeline: s.pipeline + r.pipeline, pipelineCount: s.pipelineCount + r.pipelineCount,
     won: s.won + r.won, wonCount: s.wonCount + r.wonCount, lost: s.lost + r.lost,
-    lostCount: s.lostCount + r.lostCount, cost: s.cost + r.cost,
-  }), { pipeline: 0, pipelineCount: 0, won: 0, wonCount: 0, lost: 0, lostCount: 0, cost: 0 });
-  const totalCost = spend.reduce((s, r) => s + r.amountUah, 0);
+    lostCount: s.lostCount + r.lostCount,
+  }), { pipeline: 0, pipelineCount: 0, won: 0, wonCount: 0, lost: 0, lostCount: 0 });
 
   const th = (k: string, name: string) => (
     <th className="sortable" onClick={() => { sortKey === k ? setDir(-dir) : (setSortKey(k), setDir(-1)); }}>{name}</th>
@@ -729,15 +663,16 @@ function DealsView({ deals, spend, margin, months, editor, metrics, chartSeries 
     {
       id: "deals-kpis",
       title: "Показники угод",
-      children: <><h2 className="t">Угоди · когорта за датою запиту</h2><Kpis items={[
-        ["Запитів", uah(t.pipelineCount), short(t.pipeline) + " ₴ пайплайн", "", "var(--peri)"],
+      children: <><h2 className="t">Угоди · місяць створення</h2><Kpis items={[
+        ["Відкриті", uah(t.pipelineCount), short(t.pipeline) + " ₴ пайплайн", "", "var(--peri)"],
         ["Виграно", uah(t.wonCount), `win rate ${pct(t.wonCount, t.wonCount + t.lostCount).toFixed(0)}%`, "", "var(--blue)"],
         ["Програно", uah(t.lostCount), short(t.lost) + " ₴ втрачено", "dn", "var(--peri)"],
-        ["Виручка", short(t.won) + " ₴", "нові клієнти", "", "var(--blue)"],
-        ["Середній чек", t.wonCount ? uah(t.won / t.wonCount) + " ₴" : "—", "", "", "var(--peri)"],
-        ["Прибуток", short(t.won * margin - totalCost) + " ₴", `після маркетингу · маржа ${(margin * 100).toFixed(2)}%`, "", "var(--blue)"],
-        ["Витрати", uah(totalCost) + " ₴", "усі канали", "", "var(--peri)"],
-        ["CAC", t.wonCount && totalCost ? uah(totalCost / t.wonCount) + " ₴" : "—", "", "", "var(--blue)"],
+        ["Виручка", short(t.won) + " ₴", "лише виграні", "", "var(--blue)"],
+        ["Середній чек", t.wonCount ? uah(t.won / t.wonCount) + " ₴" : "—", "лише виграні", "", "var(--peri)"],
+        ["Win rate", pct(t.wonCount, t.wonCount + t.lostCount).toFixed(0) + "%", "виграні / закриті", "", "var(--blue)"],
+        ["Втрачено", short(t.lost) + " ₴", "сума програних", "dn", "var(--peri)"],
+        ["Джерел", uah(rows.length), "у вибірці", "", "var(--blue)"],
+        ["Угод у вибірці", uah(t.pipelineCount + t.wonCount + t.lostCount), "усі етапи", "", "var(--peri)"],
       ]} /></>,
     },
     {
@@ -748,13 +683,12 @@ function DealsView({ deals, spend, margin, months, editor, metrics, chartSeries 
           <div className="ch">За джерелом</div>
           <table>
             <thead><tr>
-              {th("source", "Джерело")}{th("pipelineCount", "Запитів")}{th("wonCount", "Виграно")}
+              {th("source", "Джерело")}{th("pipelineCount", "Відкриті")}{th("wonCount", "Виграно")}
               {th("lostCount", "Програно")}{th("winrate", "Win rate")}{th("won", "Виручка")}
-              {th("avg", "Сер. чек")}{th("cycle", "Цикл, дн.")}{th("cost", "Витрати")}
-              {th("cac", "CAC")}{th("romi", "ROMI")}{th("lost", "Втрачено")}
+              {th("avg", "Сер. чек")}{th("cycle", "Цикл, дн.")}{th("lost", "Втрачено")}
             </tr></thead>
             <tbody>
-              {rows.length === 0 && <tr><td colSpan={12} className="empty">Немає даних за фільтром</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={9} className="empty">Немає даних за фільтром</td></tr>}
               {rows.map((r) => (
                 <tr key={r.source}>
                   <td><span className="dotc" style={{ background: colour(r.source) }} />{r.source}</td>
@@ -763,9 +697,6 @@ function DealsView({ deals, spend, margin, months, editor, metrics, chartSeries 
                     {r.wonCount + r.lostCount ? r.winrate.toFixed(0) + "%" : "—"}</span></td>
                   <td>{uah(r.won)}</td><td>{uah(r.avg)}</td>
                   <td>{r.cycle === null ? "—" : r.cycle.toFixed(0)}</td>
-                  <td>{r.cost ? uah(r.cost) : "—"}</td>
-                  <td>{r.cac ? uah(r.cac) : "—"}</td>
-                  <td>{r.romi === null ? "—" : <span className={`tag ${r.romi >= 100 ? "g" : "r"}`}>{Math.round(r.romi)}%</span>}</td>
                   <td style={{ color: "var(--red)" }}>{uah(r.lost)}</td>
                 </tr>
               ))}
@@ -774,15 +705,12 @@ function DealsView({ deals, spend, margin, months, editor, metrics, chartSeries 
               <td>Разом</td><td>{t.pipelineCount}</td><td>{t.wonCount}</td><td>{t.lostCount}</td>
               <td>{pct(t.wonCount, t.wonCount + t.lostCount).toFixed(0)}%</td>
               <td>{uah(t.won)}</td><td>{t.wonCount ? uah(t.won / t.wonCount) : "—"}</td><td>—</td>
-              <td>{uah(totalCost)}</td><td>{t.wonCount && totalCost ? uah(totalCost / t.wonCount) : "—"}</td>
-              <td>{totalCost ? Math.round(((t.won * margin - totalCost) / totalCost) * 100) + "%" : "—"}</td>
               <td style={{ color: "var(--red)" }}>{uah(t.lost)}</td>
             </tr></tfoot>
           </table>
           <div className="note">
-            Валовий прибуток = виручка × {(margin * 100).toFixed(2)}%; прибуток після маркетингу = валовий прибуток − витрати.
-            ROMI = прибуток після маркетингу ÷ витрати, поріг окупності 0%.
-            Оплата спеціаліста не рознесена по каналах і входить лише в загальний підсумок.
+            Ця таблиця використовує тільки файл «Угоди_2026 - 11_08.xlsx». Витрати, CAC та ROMI
+            не показуються: таких даних у двох завантажених базах немає.
           </div>
         </div>
       </div>,
@@ -794,7 +722,7 @@ function DealsView({ deals, spend, margin, months, editor, metrics, chartSeries 
         <div className="card">
           <div className="ch">По місяцях</div>
           <table>
-            <thead><tr><th>Місяць</th><th>Запитів</th><th>Пайплайн</th><th>Виграно</th><th>Програно</th>
+            <thead><tr><th>Місяць</th><th>Відкриті</th><th>Пайплайн</th><th>Виграно</th><th>Програно</th>
               <th>Win rate</th><th>Виручка</th><th>Сер. чек</th></tr></thead>
             <tbody>
               {months.map((m) => {
@@ -824,111 +752,59 @@ function DealsView({ deals, spend, margin, months, editor, metrics, chartSeries 
 }
 
 /* -------------------------------- Sources -------------------------------- */
-function SourcesView({ deals, spend, meta, selectedSource, margin, editor, metrics, chartSeries }: {
-  deals: MonthRow[]; spend: BudgetRow[]; meta: MetaRow[]; selectedSource: string | null; margin: number;
+function SourcesView({ deals, editor, metrics, chartSeries }: {
+  deals: MonthRow[];
   editor: DashboardEditorController; metrics: DashboardFormulaMetric[]; chartSeries: DashboardChartSeries[];
 }) {
-  const metaSpend = spend.filter((r) => r.channel === "meta").reduce((s, r) => s + r.amountUah, 0);
-  const gadsSpend = spend.filter((r) => r.channel === "google_ads").reduce((s, r) => s + r.amountUah, 0);
-  const seoSpend = spend.filter((r) => r.channel === "seo").reduce((s, r) => s + r.amountUah, 0);
-  const conv = meta.reduce((s, r) => s + r.conversations, 0);
-  const igAll = deals.filter((d) => d.source.startsWith("Instagram")).reduce((s, d) => s + d.won, 0);
-  const igPaid = deals.filter((d) => d.source === "Instagram Paid").reduce((s, d) => s + d.won, 0);
-  const ppc = deals.filter((d) => d.source === "Google PPC");
-  const org = deals.filter((d) => d.source === "Google Organic");
-  const ppcWon = ppc.reduce((s, d) => s + d.won, 0);
-  const orgWon = org.reduce((s, d) => s + d.won, 0);
-  const months = [...new Set(deals.map((d) => d.month))].sort();
-  const showMeta = !selectedSource || selectedSource === "Instagram Paid";
-  const showGoogle = !selectedSource || selectedSource === "Google PPC" || selectedSource === "Google Organic";
+  const map = byKey(deals, "source", ["pipeline", "pipelineCount", "won", "wonCount", "lost", "lostCount"]);
+  const rows = [...map]
+    .map(([source, value]) => ({
+      source,
+      pipeline: value.pipeline,
+      pipelineCount: value.pipelineCount,
+      won: value.won,
+      wonCount: value.wonCount,
+      lost: value.lost,
+      lostCount: value.lostCount,
+      winRate: pct(value.wonCount, value.wonCount + value.lostCount),
+    }))
+    .sort((a, b) => b.won - a.won || b.pipeline - a.pipeline);
+  const totals = rows.reduce((sum, row) => ({
+    pipeline: sum.pipeline + row.pipeline,
+    pipelineCount: sum.pipelineCount + row.pipelineCount,
+    won: sum.won + row.won,
+    wonCount: sum.wonCount + row.wonCount,
+    lost: sum.lost + row.lost,
+    lostCount: sum.lostCount + row.lostCount,
+  }), { pipeline: 0, pipelineCount: 0, won: 0, wonCount: 0, lost: 0, lostCount: 0 });
 
   const blocks: EditableBlockDefinition[] = [
     {
       id: "sources-overview",
-      title: "Рекламні джерела",
+      title: "Джерела угод",
       children: <>
-      <h2 className="t">Джерела</h2>
-      <div className="grid g11">
-        {showMeta && (
-        <div className="card">
-          <div className="ch">Meta Ads <small>Instagram Paid</small></div>
-          <Kpis items={[
-            ["Витрати", uah(metaSpend) + " ₴", "", "", "var(--lav)"],
-            ["Розмов", uah(conv), "", "", "var(--peri)"],
-            ["CPL", conv ? uah(metaSpend / conv) + " ₴" : "—", "за розмову", "", "var(--lav)"],
-            ["ROMI стеля", metaSpend ? Math.round(((igAll * margin - metaSpend) / metaSpend) * 100) + "%" : "—",
-              "якщо весь IG платний", igAll * margin >= metaSpend ? "up" : "dn", "var(--peri)"],
-          ]} />
-          <table style={{ marginTop: 14 }}>
-            <thead><tr><th>Місяць</th><th>Бюджет $</th><th>Курс</th><th>Бюджет ₴</th>
-              <th>Покази</th><th>Кліки</th><th>Розмов</th><th>CPL ₴</th></tr></thead>
+        <h2 className="t">Джерела</h2>
+        <Kpis items={[
+          ["Джерел", uah(rows.length), "за вибраним фільтром", "", "var(--blue)"],
+          ["Виручка", short(totals.won) + " ₴", `${totals.wonCount} виграних`, "", "var(--peri)"],
+          ["Пайплайн", short(totals.pipeline) + " ₴", `${totals.pipelineCount} відкритих`, "", "var(--blue)"],
+          ["Win rate", pct(totals.wonCount, totals.wonCount + totals.lostCount).toFixed(0) + "%", `${totals.lostCount} програно`, "", "var(--peri)"],
+        ]} />
+        <div className="card" style={{ marginTop: 14 }}>
+          <div className="ch">Угоди за джерелом <small>лише з файлу Угоди_2026</small></div>
+          <table>
+            <thead><tr><th>Джерело</th><th>Відкриті</th><th>Виграно</th><th>Програно</th><th>Win rate</th><th>Виручка</th><th>Пайплайн</th></tr></thead>
             <tbody>
-              {meta.map((m) => {
-                const b = spend.find((s) => s.month === m.month && s.channel === "meta");
-                const uahSpend = b?.amountUah ?? 0;
-                return (
-                  <tr key={m.month}>
-                    <td>{label(m.month)}</td><td>{m.spendUsd ? uah(m.spendUsd) + "$" : "—"}</td>
-                    <td>{b?.fxRate?.toFixed(2) ?? "—"}</td><td>{uahSpend ? uah(uahSpend) : "—"}</td>
-                    <td>{uah(m.impressions)}</td><td>{uah(m.clicks)}</td><td>{m.conversations}</td>
-                    <td>{uahSpend && m.conversations ? uah(uahSpend / m.conversations) : "—"}</td>
-                  </tr>
-                );
-              })}
+              {rows.length === 0 && <tr><td colSpan={7} className="empty">Немає даних за фільтром</td></tr>}
+              {rows.map((row) => <tr key={row.source}>
+                <td><span className="dotc" style={{ background: colour(row.source) }} />{row.source}</td>
+                <td>{row.pipelineCount}</td><td>{row.wonCount}</td><td>{row.lostCount}</td>
+                <td>{row.wonCount + row.lostCount ? row.winRate.toFixed(0) + "%" : "—"}</td>
+                <td>{uah(row.won)} ₴</td><td>{uah(row.pipeline)} ₴</td>
+              </tr>)}
             </tbody>
           </table>
-          <div className="warn">
-            Виручка з джерелом <b>Instagram Paid</b> у CRM: <b>{uah(igPaid)} ₴</b>. Уся виручка
-            Instagram разом — <b>{uah(igAll)} ₴</b>. Доки в довіднику угод немає опції
-            Instagram&nbsp;Paid, точний ROMI по Meta порахувати неможливо; «ROMI стеля» показує
-            верхню межу.
-          </div>
         </div>
-        )}
-
-        {showGoogle && (
-        <div className="card">
-          <div className="ch">Google <small>PPC та Organic</small></div>
-          <Kpis items={[
-            ["PPC витрати", uah(gadsSpend) + " ₴", "", "", "var(--peri)"],
-            ["PPC виручка", uah(ppcWon) + " ₴", `${ppc.reduce((s, d) => s + d.wonCount, 0)} угод`, ppcWon ? "" : "dn", "var(--blue)"],
-            ["Organic виручка", short(orgWon) + " ₴", `${org.reduce((s, d) => s + d.wonCount, 0)} угод`, "up", "var(--blue)"],
-            ["SEO витрати", uah(seoSpend) + " ₴", "", "", "var(--peri)"],
-          ]} />
-          <table style={{ marginTop: 14 }}>
-            <thead><tr><th>Місяць</th><th>PPC ₴</th><th>SEO ₴</th><th>Виручка PPC</th>
-              <th>Виручка Organic</th><th>Угод Organic</th><th>Сер. чек</th></tr></thead>
-            <tbody>
-              {months.map((m) => {
-                const o = org.filter((d) => d.month === m);
-                const p = ppc.filter((d) => d.month === m);
-                const rev = o.reduce((s, d) => s + d.won, 0);
-                const w = o.reduce((s, d) => s + d.wonCount, 0);
-                return (
-                  <tr key={m}>
-                    <td>{label(m)}</td>
-                    <td>{uah(spend.filter((s) => s.month === m && s.channel === "google_ads").reduce((s, r) => s + r.amountUah, 0))}</td>
-                    <td>{uah(spend.filter((s) => s.month === m && s.channel === "seo").reduce((s, r) => s + r.amountUah, 0))}</td>
-                    <td style={{ color: p.reduce((s, d) => s + d.won, 0) ? "inherit" : "var(--red)" }}>
-                      {uah(p.reduce((s, d) => s + d.won, 0))}</td>
-                    <td>{uah(rev)}</td><td>{w}</td><td>{w ? uah(rev / w) : "—"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {!ppcWon && gadsSpend > 0 && (
-            <div className="warn">
-              <b>Витрачено {uah(gadsSpend)} ₴ на Google PPC — жодної виграної угоди в CRM за обраний період.</b>{" "}
-              У бюджетній таблиці виручку Google Organic зараховано на витрати PPC, звідси ROAS у тисячі відсотків.
-            </div>
-          )}
-        </div>
-        )}
-        {!showMeta && !showGoogle && (
-          <div className="card empty">Для цього джерела немає окремого рекламного кабінету.</div>
-        )}
-      </div>
       </>,
     },
     {
@@ -937,7 +813,7 @@ function SourcesView({ deals, spend, meta, selectedSource, margin, editor, metri
       children: <div className="grid">
         <div className="card">
           <div className="ch">Усі джерела за виручкою</div>
-          <HBars rows={[...byKey(deals, "source", ["won"])].map(([k, v]) => [k, v.won] as [string, number])} />
+          <HBars rows={rows.map((row) => [row.source, row.won] as [string, number])} />
         </div>
       </div>,
     },
@@ -947,14 +823,14 @@ function SourcesView({ deals, spend, meta, selectedSource, margin, editor, metri
 }
 
 /* --------------------------------- Charts -------------------------------- */
-function LineChart({ data }: { data: Array<{ m: string; won: number; cost: number }> }) {
+function LineChart({ data }: { data: Array<{ m: string; won: number }> }) {
   const W = 640, H = 224, P = { t: 12, r: 16, b: 26, l: 48 };
   const mx = Math.max(...data.map((d) => d.won), 1);
   const X = (i: number) => P.l + (W - P.l - P.r) * (data.length > 1 ? i / (data.length - 1) : 0.5);
   const Y = (v: number) => P.t + (H - P.t - P.b) * (1 - v / mx);
-  const path = (k: "won" | "cost") => data.map((d, i) => `${i ? "L" : "M"}${X(i)},${Y(d[k])}`).join(" ");
+  const path = data.map((d, i) => `${i ? "L" : "M"}${X(i)},${Y(d.won)}`).join(" ");
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Виручка та витрати по місяцях">
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Виручка по місяцях">
       {[0, 1, 2, 3, 4].map((i) => {
         const v = (mx / 4) * i;
         return (
@@ -966,15 +842,13 @@ function LineChart({ data }: { data: Array<{ m: string; won: number; cost: numbe
       })}
       {data.length > 1 && (
         <>
-          <path d={`${path("won")} L${X(data.length - 1)},${H - P.b} L${X(0)},${H - P.b} Z`} fill="rgba(149,164,252,.14)" />
-          <path d={path("won")} fill="none" stroke="#1C1C1C" strokeWidth={2.5} strokeLinejoin="round" />
-          <path d={path("cost")} fill="none" stroke="#95A4FC" strokeWidth={2.5} strokeDasharray="5 5" />
+          <path d={`${path} L${X(data.length - 1)},${H - P.b} L${X(0)},${H - P.b} Z`} fill="rgba(149,164,252,.14)" />
+          <path d={path} fill="none" stroke="#1C1C1C" strokeWidth={2.5} strokeLinejoin="round" />
         </>
       )}
       {data.map((d, i) => (
         <g key={d.m}>
           <circle cx={X(i)} cy={Y(d.won)} r={4} fill="#fff" stroke="#1C1C1C" strokeWidth={2} />
-          <circle cx={X(i)} cy={Y(d.cost)} r={3} fill="#95A4FC" />
           <text className="ax" x={X(i)} y={H - P.b + 16} textAnchor="middle">{label(d.m)}</text>
         </g>
       ))}
@@ -1021,7 +895,7 @@ function Bars({ rows }: { rows: Array<[string, number]> }) {
   const Y = (v: number) => P.t + (H - P.t - P.b) * (1 - v / mx);
   const palette = ["#C6C7F8", "#3BB9BE", "#95A4FC", "#A8C5DA"];
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Витрати за каналами">
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Розподіл угод">
       {[0, 1, 2, 3, 4].map((i) => {
         const v = (mx / 4) * i;
         return (
