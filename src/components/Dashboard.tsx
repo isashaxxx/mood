@@ -24,6 +24,10 @@ type SourceRow = {
   avgCycleDays: number | null;
 };
 type MonthRow = SourceRow & { month: string };
+type ClientRow = {
+  month: string; source: string; company: string;
+  won: number; wonCount: number; openPipeline: number; openCount: number;
+};
 type LeadRow = {
   month: string; channel: string; source: string; total: number;
   nql: number; iql: number; mql: number; sql_: number;
@@ -33,7 +37,7 @@ type BudgetRow = { month: string; channel: string; amountUah: number; amountUsd:
 type MetaRow = { month: string; spendUsd: number; impressions: number; reach: number; clicks: number; conversations: number };
 type Payload = {
   margin: number; currentMonth: string;
-  bySource: SourceRow[]; byMonth: MonthRow[]; leads: LeadRow[];
+  bySource: SourceRow[]; byMonth: MonthRow[]; clients: ClientRow[]; leads: LeadRow[];
   budget: BudgetRow[]; meta: MetaRow[];
   sync: { finishedAt: string | null; status: string; dealsUpserted: number; leadsUpserted: number; unknownSources: string[] } | null;
 };
@@ -63,7 +67,7 @@ const VIEWS: Array<[View, string]> = [
   ["db", "Dashboard"], ["ld", "Ліди"], ["dl", "Угоди"], ["sr", "Джерела"],
 ];
 const EDITABLE_BLOCK_IDS: Record<View, readonly string[]> = {
-  db: ["dashboard-kpis", "dashboard-revenue", "dashboard-funnel"],
+  db: ["dashboard-kpis", "dashboard-revenue", "dashboard-clients", "dashboard-funnel"],
   ld: ["leads-kpis", "leads-breakdown", "leads-note"],
   dl: ["deals-kpis", "deals-by-source", "deals-by-month"],
   sr: ["sources-overview", "sources-revenue"],
@@ -190,6 +194,13 @@ export default function Dashboard({ user }: { user: string }) {
       ),
     [data, selectedMonth, selectedSource]
   );
+  const clientRows = useMemo(
+    () =>
+      (data?.clients ?? []).filter(
+        (r) => (!selectedMonth || r.month === selectedMonth) && (!selectedSource || r.source === selectedSource)
+      ),
+    [data, selectedMonth, selectedSource]
+  );
 
   const totals = useMemo(() => {
     const won = deals.reduce((s, r) => s + r.won, 0);
@@ -200,7 +211,8 @@ export default function Dashboard({ user }: { user: string }) {
     const lost = deals.reduce((s, r) => s + r.lost, 0);
     const cost = spendRows.reduce((s, r) => s + r.amountUah, 0);
     const margin = data?.margin ?? 0.1526;
-    return { won, wonCount, lostCount, pipeline, pipelineCount, lost, cost, profit: won * margin, margin };
+    const grossProfit = won * margin;
+    return { won, wonCount, lostCount, pipeline, pipelineCount, lost, cost, grossProfit, profit: grossProfit - cost, margin };
   }, [deals, spendRows, data]);
 
   const displayMonths = useMemo(
@@ -334,7 +346,7 @@ export default function Dashboard({ user }: { user: string }) {
           )}
         </div>
 
-        {view === "db" && <DashboardView deals={deals} leads={leadRows} spend={spendRows} totals={totals} months={displayMonths} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
+        {view === "db" && <DashboardView deals={deals} clients={clientRows} leads={leadRows} spend={spendRows} totals={totals} months={displayMonths} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
         {view === "ld" && <LeadsView leads={leadRows} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
         {view === "dl" && <DealsView deals={deals} spend={spendRows} margin={totals.margin} months={displayMonths} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
         {view === "sr" && <SourcesView deals={deals} spend={spendRows} meta={data!.meta.filter((m) => (!selectedMonth || m.month === selectedMonth) && (!selectedSource || selectedSource === "Instagram Paid"))} selectedSource={selectedSource} margin={totals.margin} editor={editor} metrics={editorMetrics} chartSeries={editorChartSeries} />}
@@ -460,8 +472,8 @@ function EditableBlocks({
 }
 
 /* ------------------------------- Dashboard ------------------------------- */
-function DashboardView({ deals, leads, spend, totals, months, editor, metrics, chartSeries }: {
-  deals: MonthRow[]; leads: LeadRow[]; spend: BudgetRow[];
+function DashboardView({ deals, clients, leads, spend, totals, months, editor, metrics, chartSeries }: {
+  deals: MonthRow[]; clients: ClientRow[]; leads: LeadRow[]; spend: BudgetRow[];
   totals: ReturnType<typeof Object> & Record<string, number>; months: string[];
   editor: DashboardEditorController; metrics: DashboardFormulaMetric[]; chartSeries: DashboardChartSeries[];
 }) {
@@ -473,6 +485,23 @@ function DashboardView({ deals, leads, spend, totals, months, editor, metrics, c
     cost: spend.filter((r) => r.month === m).reduce((s, r) => s + r.amountUah, 0),
   }));
   const src = byKey(deals, "source", ["won", "wonCount", "pipeline"]);
+  const companies: Array<Pick<ClientRow, "company" | "won" | "wonCount" | "openPipeline" | "openCount">> =
+    [...byKey(clients, "company", ["won", "wonCount", "openPipeline", "openCount"])]
+      .map(([company, values]) => ({
+        company,
+        won: values.won ?? 0,
+        wonCount: values.wonCount ?? 0,
+        openPipeline: values.openPipeline ?? 0,
+        openCount: values.openCount ?? 0,
+      }));
+  const topRevenue = companies
+    .filter((row) => row.won > 0)
+    .sort((a, b) => b.won - a.won)
+    .slice(0, 5);
+  const topOpenPipeline = companies
+    .filter((row) => row.openPipeline > 0)
+    .sort((a, b) => b.openPipeline - a.openPipeline)
+    .slice(0, 5);
 
   const blocks: EditableBlockDefinition[] = [
     {
@@ -481,11 +510,11 @@ function DashboardView({ deals, leads, spend, totals, months, editor, metrics, c
       children: <><h2 className="t">Ключові показники</h2><Kpis items={[
         ["Виручка", short(totals.won) + " ₴", `${totals.wonCount} угод`, "", "var(--blue)"],
         ["Витрати", uah(totals.cost) + " ₴", "реклама + ведення", "", "var(--peri)"],
-        ["Прибуток", short(totals.profit) + " ₴", `маржа ${(totals.margin * 100).toFixed(2)}%`, totals.profit > totals.cost ? "up" : "dn", "var(--blue)"],
-        ["ROMI", totals.cost ? Math.round(romi) + "%" : "—", "поріг 100%", romi >= 100 ? "up" : "dn", "var(--peri)"],
-        ["Пайплайн", short(totals.pipeline) + " ₴", `${totals.pipelineCount} угод у когорті`, "", "var(--peri)"],
+        ["Прибуток", short(totals.profit) + " ₴", `після маркетингу · маржа ${(totals.margin * 100).toFixed(2)}%`, totals.profit >= 0 ? "up" : "dn", "var(--blue)"],
+        ["ROMI", totals.cost ? Math.round(romi) + "%" : "—", "поріг 0%", romi >= 0 ? "up" : "dn", "var(--peri)"],
+        ["Пайплайн", short(totals.pipeline) + " ₴", `${totals.pipelineCount} відкритих угод`, "", "var(--peri)"],
         ["Win rate", pct(totals.wonCount, totals.wonCount + totals.lostCount).toFixed(0) + "%", `${totals.lostCount} програно`, "", "var(--blue)"],
-        ["Середній чек", totals.wonCount ? uah(totals.won / totals.wonCount) + " ₴" : "—", "новий клієнт", "", "var(--peri)"],
+        ["Середній чек", totals.wonCount ? uah(totals.won / totals.wonCount) + " ₴" : "—", "лише виграні угоди", "", "var(--peri)"],
         ["Лідів", uah(leadTotal), "з 13.06.2026", "", "var(--blue)"],
       ]} /></>,
     },
@@ -500,6 +529,36 @@ function DashboardView({ deals, leads, spend, totals, months, editor, metrics, c
         <div className="card">
           <div className="ch">Виручка за джерелами</div>
           <Donut rows={[...src].map(([k, v]) => [k, v.won] as [string, number])} />
+        </div>
+      </div>,
+    },
+    {
+      id: "dashboard-clients",
+      title: "Топ клієнтів",
+      children: <div className="grid g11">
+        <div className="card">
+          <div className="ch">Топ клієнтів <small>лише виграні угоди</small></div>
+          <table>
+            <thead><tr><th>Компанія</th><th>Виграно</th><th>Виручка</th></tr></thead>
+            <tbody>
+              {topRevenue.length === 0 && <tr><td colSpan={3} className="empty">Немає виграних угод за фільтром</td></tr>}
+              {topRevenue.map((row) => <tr key={row.company}>
+                <td>{row.company}</td><td>{row.wonCount}</td><td>{uah(row.won)} ₴</td>
+              </tr>)}
+            </tbody>
+          </table>
+        </div>
+        <div className="card">
+          <div className="ch">Топ відкритих угод <small>без виграних і програних</small></div>
+          <table>
+            <thead><tr><th>Компанія</th><th>Відкрито</th><th>Пайплайн</th></tr></thead>
+            <tbody>
+              {topOpenPipeline.length === 0 && <tr><td colSpan={3} className="empty">Немає відкритих угод за фільтром</td></tr>}
+              {topOpenPipeline.map((row) => <tr key={row.company}>
+                <td>{row.company}</td><td>{row.openCount}</td><td>{uah(row.openPipeline)} ₴</td>
+              </tr>)}
+            </tbody>
+          </table>
         </div>
       </div>,
     },
@@ -649,7 +708,7 @@ function DealsView({ deals, spend, margin, months, editor, metrics, chartSeries 
       avg: v.wonCount ? v.won / v.wonCount : 0,
       cycle: cycles.length ? cycles.reduce((s, c) => s + (c.avgCycleDays ?? 0), 0) / cycles.length : null,
       cac: v.wonCount && cost ? cost / v.wonCount : null,
-      romi: cost ? (v.won * margin) / cost * 100 : null,
+      romi: cost ? ((v.won * margin - cost) / cost) * 100 : null,
     };
   });
   rows.sort((a, b) => (((a as never as Record<string, number>)[sortKey] ?? -1) > ((b as never as Record<string, number>)[sortKey] ?? -1) ? 1 : -1) * dir);
@@ -674,7 +733,7 @@ function DealsView({ deals, spend, margin, months, editor, metrics, chartSeries 
         ["Програно", uah(t.lostCount), short(t.lost) + " ₴ втрачено", "dn", "var(--peri)"],
         ["Виручка", short(t.won) + " ₴", "нові клієнти", "", "var(--blue)"],
         ["Середній чек", t.wonCount ? uah(t.won / t.wonCount) + " ₴" : "—", "", "", "var(--peri)"],
-        ["Прибуток", short(t.won * margin) + " ₴", `маржа ${(margin * 100).toFixed(2)}%`, "", "var(--blue)"],
+        ["Прибуток", short(t.won * margin - totalCost) + " ₴", `після маркетингу · маржа ${(margin * 100).toFixed(2)}%`, "", "var(--blue)"],
         ["Витрати", uah(totalCost) + " ₴", "усі канали", "", "var(--peri)"],
         ["CAC", t.wonCount && totalCost ? uah(totalCost / t.wonCount) + " ₴" : "—", "", "", "var(--blue)"],
       ]} /></>,
@@ -714,12 +773,13 @@ function DealsView({ deals, spend, margin, months, editor, metrics, chartSeries 
               <td>{pct(t.wonCount, t.wonCount + t.lostCount).toFixed(0)}%</td>
               <td>{uah(t.won)}</td><td>{t.wonCount ? uah(t.won / t.wonCount) : "—"}</td><td>—</td>
               <td>{uah(totalCost)}</td><td>{t.wonCount && totalCost ? uah(totalCost / t.wonCount) : "—"}</td>
-              <td>{totalCost ? Math.round((t.won * margin) / totalCost * 100) + "%" : "—"}</td>
+              <td>{totalCost ? Math.round(((t.won * margin - totalCost) / totalCost) * 100) + "%" : "—"}</td>
               <td style={{ color: "var(--red)" }}>{uah(t.lost)}</td>
             </tr></tfoot>
           </table>
           <div className="note">
-            Прибуток = виручка × {(margin * 100).toFixed(2)}%. ROMI = прибуток ÷ витрати, поріг окупності 100%.
+            Валовий прибуток = виручка × {(margin * 100).toFixed(2)}%; прибуток після маркетингу = валовий прибуток − витрати.
+            ROMI = прибуток після маркетингу ÷ витрати, поріг окупності 0%.
             Оплата спеціаліста не рознесена по каналах і входить лише в загальний підсумок.
           </div>
         </div>
@@ -794,7 +854,7 @@ function SourcesView({ deals, spend, meta, selectedSource, margin, editor, metri
             ["Витрати", uah(metaSpend) + " ₴", "", "", "var(--lav)"],
             ["Розмов", uah(conv), "", "", "var(--peri)"],
             ["CPL", conv ? uah(metaSpend / conv) + " ₴" : "—", "за розмову", "", "var(--lav)"],
-            ["ROMI стеля", metaSpend ? Math.round((igAll * margin) / metaSpend * 100) + "%" : "—",
+            ["ROMI стеля", metaSpend ? Math.round(((igAll * margin - metaSpend) / metaSpend) * 100) + "%" : "—",
               "якщо весь IG платний", igAll * margin >= metaSpend ? "up" : "dn", "var(--peri)"],
           ]} />
           <table style={{ marginTop: 14 }}>
