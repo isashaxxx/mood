@@ -2,13 +2,8 @@ import {
   pgTable, text, integer, doublePrecision, boolean, timestamp, date, index, primaryKey,
 } from "drizzle-orm/pg-core";
 
-/**
- * Deals — mirror of the NetHunt "Inbound угоди" saved view. Its source folder
- * is "Всі угоди", but the full view filter is reproduced at sync time.
- *
- * cohortMonth is a legacy column name. It stores the Created month because
- * NetHunt's Inbound view is filtered by Created; closing can happen later.
- */
+/** Historical storage reserved for a future authenticated Excel-upload flow.
+ * The live dashboard currently reads the versioned 2026 Excel snapshot. */
 export const deals = pgTable(
   "deals",
   {
@@ -40,7 +35,7 @@ export const deals = pgTable(
   })
 );
 
-/** Leads — mirror of the NetHunt "Ліди" folder. */
+/** Historical storage reserved for a future authenticated Excel-upload flow. */
 export const leads = pgTable(
   "leads",
   {
@@ -58,8 +53,7 @@ export const leads = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true }),
     month: text("month").notNull(), // 'YYYY-MM'
-    /** Hours between record creation and the last card change. Proxy for
-     *  handling time until NetHunt gets a real "handed to sales" timestamp. */
+    /** Hours between record creation and the last card change in an import. */
     handlingHours: doublePrecision("handling_hours"),
     syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -93,7 +87,7 @@ export const metaStats = pgTable("meta_stats", {
   conversations: integer("conversations").default(0).notNull(),
 });
 
-/** One row per sync run — powers the "Оновлено …" stamp and the refresh button. */
+/** Reserved for future Excel-upload runs. */
 export const syncLog = pgTable("sync_log", {
   id: text("id").primaryKey(),
   startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
