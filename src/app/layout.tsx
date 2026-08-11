@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "MOODua · Наскрізна аналітика",
-  description: "Ліди, угоди та витрати з NetHunt CRM і Meta Ads",
+  description: "Аналітика MOODua на основі Excel-баз угод і лідів за 2026 рік",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
