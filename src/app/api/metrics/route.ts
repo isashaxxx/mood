@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import {
-  dealsByMonth, dealsBySource, lastSync, leadBreakdown, meta, spend, MARGIN,
+  clientsByMonth, dealsByMonth, dealsBySource, lastSync, leadBreakdown, meta, spend, MARGIN,
 } from "@/lib/metrics";
 import { userFromRequest } from "@/lib/auth";
 import { currentReportingMonth, MetricsFilterError, parseMetricsFilters } from "@/lib/metrics-filters";
@@ -24,13 +24,13 @@ export async function GET(req: Request) {
   }
 
   try {
-    const [bySource, byMonth, leads, budget, metaRows, sync] = await Promise.all([
-      dealsBySource(f), dealsByMonth(f), leadBreakdown(f), spend(f), meta(f), lastSync(),
+    const [bySource, clients, byMonth, leads, budget, metaRows, sync] = await Promise.all([
+      dealsBySource(f), clientsByMonth(f), dealsByMonth(f), leadBreakdown(f), spend(f), meta(f), lastSync(),
     ]);
 
     return NextResponse.json({
       filters: f, margin: MARGIN, currentMonth: currentReportingMonth(),
-      bySource, byMonth, leads, budget, meta: metaRows,
+      bySource, byMonth, clients, leads, budget, meta: metaRows,
       sync: sync && {
         finishedAt: sync.finishedAt, status: sync.status, trigger: sync.trigger,
         dealsUpserted: sync.dealsUpserted, leadsUpserted: sync.leadsUpserted,
