@@ -3,11 +3,11 @@ import {
 } from "drizzle-orm/pg-core";
 
 /**
- * Deals — mirror of the NetHunt "Всі угоди" folder, restricted to inbound
- * (outbound sources are dropped at sync time, see lib/taxonomy.ts).
+ * Deals — mirror of the NetHunt "Inbound угоди" saved view. Its source folder
+ * is "Всі угоди", but the full view filter is reproduced at sync time.
  *
- * cohortMonth is the month a deal was REQUESTED, not closed. Marketing is
- * measured on the month the demand arrived; closing can happen months later.
+ * cohortMonth is a legacy column name. It stores the Created month because
+ * NetHunt's Inbound view is filtered by Created; closing can happen later.
  */
 export const deals = pgTable(
   "deals",
@@ -29,7 +29,7 @@ export const deals = pgTable(
     lostAt: date("lost_at"),
     createdAt: timestamp("created_at", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true }),
-    cohortMonth: text("cohort_month").notNull(), // 'YYYY-MM' from requestedAt ?? createdAt
+    cohortMonth: text("cohort_month").notNull(), // 'YYYY-MM' from createdAt
     closeMonth: text("close_month"), // 'YYYY-MM' from wonAt ?? lostAt
     syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow().notNull(),
   },
