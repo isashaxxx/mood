@@ -4,8 +4,8 @@ import { runSync } from "@/lib/sync";
 import { userFromRequest } from "@/lib/auth";
 
 export const runtime = "nodejs";
-// Vercel Hobby allows a maximum 60-second function. The initial full import is
-// deliberately run with scripts/sync-cli.ts locally; Vercel only runs deltas.
+// The 2026 Inbound rebuild is bounded to one reporting year and stays within
+// the Hobby function limit. It is triggered explicitly from the dashboard.
 export const maxDuration = 60;
 
 async function authorised(req: Request): Promise<boolean> {
@@ -27,13 +27,6 @@ export async function POST(req: Request) {
   const url = new URL(req.url);
   const full = url.searchParams.get("full") === "1";
   const trigger = url.searchParams.get("cron") === "1" ? "cron" : "manual";
-
-  if (full && process.env.VERCEL) {
-    return NextResponse.json(
-      { error: "Повний імпорт запускайте локально: npx tsx scripts/sync-cli.ts --full" },
-      { status: 400 }
-    );
-  }
 
   try {
     const result = await runSync({ trigger, full });
