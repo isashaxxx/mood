@@ -38,7 +38,7 @@ export const SOURCE_MAP: Record<string, string> = {
   "Binotel": "Не вказано",
 };
 
-/** Outbound is sales-generated demand. It never enters marketing reporting. */
+/** Keep outbound as its own label if it appears in a future Excel export. */
 export const OUTBOUND_SOURCES = new Set(["Аутбаунд", "Outbound", "Аутбаунд сейлз", "Outbound sales"]);
 
 export const UNSET = "Не вказано";
@@ -50,8 +50,7 @@ export function normaliseSource(raw: string | null | undefined): Normalised {
   if (!v) return { source: UNSET, isOutbound: false, unknown: false };
   if (OUTBOUND_SOURCES.has(v)) return { source: "Outbound", isOutbound: true, unknown: false };
   const mapped = SOURCE_MAP[v];
-  // An unmapped value is surfaced in the sync log rather than silently bucketed,
-  // so a new dropdown option in NetHunt never quietly vanishes from reports.
+  // New values stay in the catch-all bucket until the Excel taxonomy is updated.
   return { source: mapped ?? "Інше", isOutbound: false, unknown: !mapped };
 }
 
