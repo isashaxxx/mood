@@ -35,9 +35,9 @@ export type ClientRow = {
 };
 
 /**
- * Everything is measured on the COHORT month — the month the request arrived
- * (Дата - Запит), not the month the deal closed. A deal opened in May and won
- * in August belongs to May, because May is the month marketing paid for it.
+ * Everything is measured on the reporting month of the saved NetHunt view:
+ * the record's Created month. The SQL column is still called cohortMonth for
+ * backwards compatibility, but it now mirrors the view that users see in CRM.
  */
 export async function dealsBySource(f: Filters): Promise<SourceRow[]> {
   const db = getDb();
