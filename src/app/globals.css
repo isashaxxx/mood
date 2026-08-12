@@ -33,8 +33,10 @@ main{padding:20px 26px 70px;min-width:0}
 .crumbs b{color:var(--ink);font-weight:600}
 .crumbs .right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px}
 .crumbs .top-editor-toolbar{margin:0;min-height:0}
-.profile{display:inline-flex;align-items:center;gap:7px;color:var(--ink);font-weight:700}
-.profile img{width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--teal);border:1px solid rgba(28,28,28,.08)}
+.account{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:center;padding:5px 8px 20px;border-bottom:1px solid var(--line);margin:0 2px 14px}
+.avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--teal);color:#fff;font-size:12px;font-weight:800}
+.account-copy{min-width:0;display:flex;flex-direction:column;line-height:15px}.account-copy b{font-size:13px;overflow:hidden;text-overflow:ellipsis}.account-copy small{font-size:10px;color:var(--m40)}
+.logout{grid-column:2;font:inherit;font-size:11px;color:var(--m40);border:0;background:none;text-align:left;padding:0;cursor:pointer;width:max-content}.logout:hover{color:var(--ink)}
 .refresh{font:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;
   border:1px solid var(--m20);background:#fff;cursor:pointer;display:flex;align-items:center;gap:7px}
 .refresh:hover:not(:disabled){border-color:var(--ink)}
@@ -45,7 +47,10 @@ main{padding:20px 26px 70px;min-width:0}
 @media(prefers-reduced-motion:reduce){.refresh .spin{animation-duration:2.4s}}
 
 h2.t{font-size:14px;font-weight:700;padding:6px 0 12px}
-.filters{display:flex;gap:20px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.filters{display:flex;gap:10px;align-items:end;padding:12px 0 18px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.filter-select{display:flex;flex-direction:column;gap:6px;min-width:180px;max-width:240px}
+.filter-select select{appearance:none;width:100%;padding:8px 34px 8px 11px;border:1px solid var(--m20);border-radius:9px;background:linear-gradient(45deg,transparent 50%,var(--m40) 50%) calc(100% - 15px) 50%/5px 5px no-repeat,#fff;color:var(--ink);font:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.filter-select select:hover{border-color:var(--ink)}.filter-select select:focus{outline:2px solid var(--ind);outline-offset:1px}
 .fg{display:flex;flex-direction:column;gap:6px}
 .fl{font-size:11px;color:var(--m40);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 .chips{display:flex;gap:4px;flex-wrap:wrap}
@@ -107,8 +112,8 @@ tfoot td{font-weight:700;border-top:1px solid var(--line);border-bottom:0}
   .crumbs{align-items:flex-start;gap:6px;flex-wrap:wrap;padding-bottom:14px}
   .crumbs .right{width:100%;margin-left:0;justify-content:flex-start;flex-wrap:wrap}
   .crumbs .top-editor-toolbar{margin-left:auto}
-  .profile{order:-1}
-  .filters{gap:14px;margin-bottom:14px}
+  .filters{gap:10px;margin-bottom:14px}
+  .filter-select{min-width:0;flex:1 1 150px;max-width:none}
   .fg{width:100%}.chips{gap:5px}
   .chip{padding:6px 9px}.card{padding:14px;border-radius:13px}
   .kpis{gap:9px}.kpi{min-height:80px;padding:13px}.kpi .v{font-size:19px}
