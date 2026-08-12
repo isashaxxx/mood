@@ -63,7 +63,7 @@ svg { display: block; max-width: 100%; }
 /* Application shell - the visual structure follows the supplied admin UI kit. */
 .app {
   display: grid;
-  grid-template-columns: 212px minmax(0, 1fr) 280px;
+  grid-template-columns: 212px minmax(0, 1fr);
   width: 100%;
   height: 100dvh;
   min-height: 600px;
@@ -433,7 +433,7 @@ svg { display: block; max-width: 100%; }
 .snow-kpi > small { margin-top: 12px; color: #505157; font-size: 10px; font-weight: 650; }
 .snow-kpi > small i { margin-left: 4px; color: var(--teal-deep); font-size: 15px; font-style: normal; }
 .snow-dashboard-grid { display: grid; gap: 18px; margin-top: 28px; }
-.snow-primary-grid { grid-template-columns: minmax(0, 1fr) minmax(230px, .36fr); }
+.snow-primary-grid { grid-template-columns: minmax(0, 1fr) minmax(310px, .38fr); }
 .snow-secondary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .snow-card {
   min-width: 0;
@@ -488,22 +488,49 @@ svg { display: block; max-width: 100%; }
 .snow-chart-title span { color: var(--muted); font-size: 10px; }
 .snow-line-card svg { width: 100%; min-height: 244px; margin-top: 4px; }
 .snow-source-card { min-height: 355px; }
-.snow-source-list { display: grid; gap: 4px; }
+.snow-source-list { display: grid; gap: 0; }
 .snow-source-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(56px, .76fr) auto;
+  grid-template-columns: 27px minmax(0, 1fr) minmax(58px, .72fr) auto;
   align-items: center;
   gap: 9px;
   width: 100%;
-  min-height: 39px;
-  padding: 0;
+  min-height: 48px;
+  padding: 6px 0;
   border: 0;
+  border-bottom: 1px dashed var(--line-strong);
   color: var(--ink);
   background: transparent;
   text-align: left;
 }
-.snow-source-row:hover span { color: var(--teal-deep); }
-.snow-source-row > span { overflow: hidden; font-size: 11px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.snow-source-row:last-child { border-bottom: 0; }
+.snow-source-row:hover > span b { color: var(--teal-deep); }
+.snow-source-row > em {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 7px;
+  color: var(--teal-deep);
+  background: var(--accent-pale);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+}
+.snow-source-row > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.snow-source-row > span b {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.snow-source-row > span small { color: var(--muted); font-size: 9px; }
 .snow-source-row > i {
   display: block;
   height: 5px;
@@ -545,91 +572,6 @@ svg { display: block; max-width: 100%; }
 .snow-mini-table button small { grid-column: 1; color: var(--muted); font-size: 9px; }
 .snow-mini-table button b { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-size: 11px; font-weight: 800; white-space: nowrap; }
 .data-footnote { margin: 0 32px 28px; color: var(--muted); font-size: 10px; }
-
-/* Right activity rail */
-.activity-rail {
-  min-width: 0;
-  height: 100dvh;
-  overflow-y: auto;
-  padding: 29px 20px 32px;
-  border-left: 1px solid var(--line);
-  background: var(--page);
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
-}
-.activity-section + .activity-section { margin-top: 34px; }
-.activity-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-.activity-heading h2 { margin: 0; color: var(--ink); font-size: 15px; font-weight: 780; letter-spacing: -.035em; }
-.activity-heading button {
-  display: grid;
-  width: 27px;
-  height: 27px;
-  place-items: center;
-  padding: 0;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  color: var(--teal-deep);
-  background: var(--page);
-}
-.activity-heading button .ui-icon { width: 14px; height: 14px; }
-.activity-heading button:hover { border-color: var(--teal); background: var(--accent-pale); }
-.activity-list { display: grid; gap: 16px; }
-.activity-item {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
-  align-items: start;
-  gap: 10px;
-}
-.activity-icon {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border-radius: 9px;
-  color: var(--teal-deep);
-  background: var(--accent-soft);
-}
-.activity-icon .ui-icon { width: 15px; height: 15px; }
-.activity-item > span:last-child { display: grid; gap: 4px; min-width: 0; padding-top: 1px; }
-.activity-item strong { overflow: hidden; color: var(--ink); font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-.activity-item small { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
-.activity-sources { padding-top: 2px; }
-.activity-source {
-  display: grid;
-  grid-template-columns: 25px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 47px;
-  padding: 6px 0;
-  border: 0;
-  border-bottom: 1px dashed var(--line);
-  color: var(--ink);
-  background: transparent;
-  text-align: left;
-}
-.activity-source:hover strong { color: var(--teal-deep); }
-.activity-source-index {
-  display: grid;
-  width: 25px;
-  height: 25px;
-  place-items: center;
-  border-radius: 7px;
-  color: var(--teal-deep);
-  background: var(--accent-pale);
-  font-size: 9px;
-  font-weight: 800;
-}
-.activity-source > span:nth-child(2) { display: grid; min-width: 0; gap: 3px; }
-.activity-source strong { overflow: hidden; font-size: 11px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
-.activity-source small { color: var(--muted); font-size: 9px; }
-.activity-source b { font-size: 10px; font-weight: 800; white-space: nowrap; }
 
 /* Shared analytics views */
 .t { margin: 0 0 18px; font-size: 25px; font-weight: 780; letter-spacing: -.06em; }
@@ -736,7 +678,7 @@ tfoot td { border-top: 1px solid var(--line-strong); border-bottom: 0; color: va
 .editorBlockToolbar { margin-bottom: 10px; }
 
 @media (max-width: 1400px) {
-  .app { grid-template-columns: 196px minmax(0, 1fr) 250px; }
+  .app { grid-template-columns: 196px minmax(0, 1fr); }
   .sidebar { padding-right: 13px; padding-left: 13px; }
   .main-frame { min-width: 0; }
   .topbar { padding-right: 24px; padding-left: 24px; }
@@ -749,8 +691,7 @@ tfoot td { border-top: 1px solid var(--line-strong); border-bottom: 0; color: va
 }
 @media (max-width: 1180px) {
   .app { grid-template-columns: 196px minmax(0, 1fr); }
-  .activity-rail { display: none; }
-  .snow-primary-grid { grid-template-columns: minmax(0, 1fr) 250px; }
+  .snow-primary-grid { grid-template-columns: minmax(0, 1fr) 270px; }
 }
 @media (max-width: 920px) {
   .app { grid-template-columns: 72px minmax(0, 1fr); }
@@ -822,7 +763,7 @@ tfoot td { border-top: 1px solid var(--line-strong); border-bottom: 0; color: va
   .snow-line-card { min-height: 300px; }
   .snow-line-card svg { min-width: 420px; }
   .snow-card:has(svg) { overflow-x: auto; }
-  .snow-source-row { grid-template-columns: minmax(80px, 1fr) minmax(52px, .72fr) auto; }
+  .snow-source-row { grid-template-columns: 25px minmax(80px, 1fr) minmax(52px, .72fr) auto; }
   .snow-table-card { margin-top: 20px; }
   .card { padding: 16px; border-radius: 14px; }
   .card svg { min-width: 370px; }
