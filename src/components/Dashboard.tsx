@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { SOURCE_COLORS } from "@/lib/taxonomy";
 import {
   DashboardCustomWidget,
@@ -58,12 +58,47 @@ type View = "db" | "ld" | "dl" | "sr";
 const VIEWS: Array<[View, string]> = [
   ["db", "Dashboard"], ["ld", "Ліди"], ["dl", "Угоди"], ["sr", "Джерела"],
 ];
-const NAV_ICONS: Record<View, string> = {
-  db: "▦",
-  ld: "◌",
-  dl: "◫",
-  sr: "◎",
+type IconName =
+  | "dashboard"
+  | "leads"
+  | "deals"
+  | "sources"
+  | "layout"
+  | "search"
+  | "reset"
+  | "refresh"
+  | "check"
+  | "target"
+  | "logout"
+  | "plus"
+  | "arrow";
+
+const NAV_ICONS: Record<View, IconName> = {
+  db: "dashboard",
+  ld: "leads",
+  dl: "deals",
+  sr: "sources",
 };
+
+function Icon({ name }: { name: IconName }) {
+  return (
+    <svg className="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      {name === "dashboard" ? <><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" /></> : null}
+      {name === "leads" ? <><circle cx="12" cy="7.5" r="3.25" /><path d="M5 20c.8-3.35 3.12-5.02 7-5.02S18.2 16.65 19 20" /></> : null}
+      {name === "deals" ? <><rect x="3.5" y="5.5" width="17" height="14" rx="2" /><path d="M8.3 5.5V3.8h7.4v1.7M3.5 10.2h17M10 14h4" /></> : null}
+      {name === "sources" ? <><circle cx="12" cy="12" r="8.25" /><path d="M3.75 12h16.5M12 3.75c2.1 2.3 3.15 5.05 3.15 8.25S14.1 17.95 12 20.25C9.9 17.95 8.85 15.2 8.85 12S9.9 6.05 12 3.75Z" /></> : null}
+      {name === "layout" ? <><rect x="3.5" y="4" width="17" height="16" rx="2" /><path d="M8.5 4v16M8.5 9h12" /></> : null}
+      {name === "search" ? <><circle cx="10.7" cy="10.7" r="5.8" /><path d="m15.2 15.2 4.1 4.1" /></> : null}
+      {name === "reset" ? <><path d="M4.3 9.5A8.1 8.1 0 1 1 5.1 16" /><path d="M4.3 4.8v4.7H9" /></> : null}
+      {name === "refresh" ? <><path d="M20 11a8 8 0 0 0-14.4-4.8L4 8" /><path d="M4 4v4h4M4 13a8 8 0 0 0 14.4 4.8L20 16" /><path d="M20 20v-4h-4" /></> : null}
+      {name === "check" ? <path d="m5 12.3 4.1 4.1L19.2 6.3" /> : null}
+      {name === "target" ? <><circle cx="12" cy="12" r="7.8" /><circle cx="12" cy="12" r="3" /><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22" /></> : null}
+      {name === "logout" ? <><path d="M10 4H5.8A1.8 1.8 0 0 0 4 5.8v12.4A1.8 1.8 0 0 0 5.8 20H10" /><path d="M14 8l4 4-4 4M8 12h10" /></> : null}
+      {name === "plus" ? <path d="M12 5v14M5 12h14" /> : null}
+      {name === "arrow" ? <path d="M5 12h13M13 6l6 6-6 6" /> : null}
+    </svg>
+  );
+}
 const EDITABLE_BLOCK_IDS: Record<View, readonly string[]> = {
   db: ["dashboard-kpis", "dashboard-revenue", "dashboard-clients", "dashboard-funnel"],
   ld: ["leads-kpis", "leads-breakdown", "leads-note"],
@@ -91,7 +126,6 @@ export default function Dashboard({ user }: { user: string }) {
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -121,14 +155,6 @@ export default function Dashboard({ user }: { user: string }) {
     }).catch(() => undefined);
   }, [load]);
 
-  useEffect(() => {
-    if (!filtersOpen) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setFiltersOpen(false);
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [filtersOpen]);
 
   const allMonths = useMemo(() => {
     if (!data) return [];
@@ -265,7 +291,7 @@ export default function Dashboard({ user }: { user: string }) {
   if (loading && !data) {
     return (
       <div className="app">
-        <Sidebar view={view} setView={setView} />
+        <Sidebar view={view} setView={setView} user={user} />
         <main className="main-frame">
           <div className="crumbs">Аналітика <span>/</span> <b>Dashboard</b></div>
           <div className="kpis">{[...Array(8)].map((_, i) => <div key={i} className="skeleton" />)}</div>
@@ -277,7 +303,7 @@ export default function Dashboard({ user }: { user: string }) {
   if (!data) {
     return (
       <div className="app">
-        <Sidebar view={view} setView={setView} />
+        <Sidebar view={view} setView={setView} user={user} />
         <main className="main-frame error-state">
           <div className="crumbs">Аналітика <span>/</span> <b>Dashboard</b></div>
           <h1>Дані поки недоступні</h1>
@@ -296,89 +322,78 @@ export default function Dashboard({ user }: { user: string }) {
   const sourceLabel = data.sync?.sources
     ? data.sync.sources.deals + " + " + data.sync.sources.leads
     : "Excel-бази 2026";
-  const activeFilterCount = [selectedSource, selectedChannel].filter(Boolean).length;
   const resetFilters = () => {
-    setSelectedMonth(null);
+    setSelectedMonth(data.currentMonth);
     setSelectedSource(null);
     setSelectedChannel(null);
     setQuery("");
-    setFiltersOpen(false);
   };
 
   return (
-    <div className="app">
-      <Sidebar view={view} setView={setView} onLogout={logout} />
+    <div className={"app app-" + view}>
+      <Sidebar view={view} setView={setView} user={user} onLogout={logout} />
       <main className="main-frame">
         <header className="topbar">
-          <label className="global-search">
-            <span className="search-glyph" aria-hidden>⌕</span>
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Пошук клієнта, джерела або каналу…"
-              aria-label="Пошук клієнта, джерела або каналу"
-            />
-          </label>
-          <button
-            className="utility-button"
-            type="button"
-            onClick={() => load().catch(() => undefined)}
-            disabled={loading}
-            aria-label={loading ? "Оновлюю дані" : "Оновити дані"}
-            title={loading ? "Оновлюю дані" : "Оновити дані"}
-          >
-            {loading ? "…" : "↻"}
-          </button>
-          <div className="filter-control">
-            {filtersOpen ? <button type="button" className="filter-backdrop" onClick={() => setFiltersOpen(false)} aria-label="Закрити фільтри" /> : null}
+          <div className="topbar-breadcrumb">
+            <span className="topbar-nav-mark" aria-hidden><Icon name="layout" /></span>
+            <span className="topbar-crumb-muted">Аналітика</span>
+            <span className="topbar-slash" aria-hidden>/</span>
+            <strong>{VIEWS.find(([v]) => v === view)?.[1]}</strong>
+          </div>
+          <div className="topbar-actions">
+            <label className="global-search">
+              <span className="search-glyph" aria-hidden><Icon name="search" /></span>
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Пошук клієнта, джерела або каналу…"
+                aria-label="Пошук клієнта, джерела або каналу"
+              />
+              <kbd>⌘ K</kbd>
+            </label>
+            <button className="utility-button" type="button" onClick={resetFilters} title="Скинути фільтри" aria-label="Скинути фільтри"><Icon name="reset" /></button>
             <button
-              className={"filters-trigger" + (activeFilterCount ? " has-active" : "")}
+              className="utility-button"
               type="button"
-              onClick={() => setFiltersOpen((value) => !value)}
-              aria-expanded={filtersOpen}
-              aria-controls="dashboard-filters"
+              onClick={() => load().catch(() => undefined)}
+              disabled={loading}
+              aria-label={loading ? "Оновлюю дані" : "Оновити дані"}
+              title={loading ? "Оновлюю дані" : "Оновити дані"}
             >
-              <span aria-hidden>☷</span> Фільтри
-              {activeFilterCount ? <b>{activeFilterCount}</b> : null}
+              {loading ? "…" : <Icon name="refresh" />}
             </button>
-            {filtersOpen ? (
-              <div id="dashboard-filters" className="filter-popover" role="dialog" aria-label="Фільтри аналітики">
-                <div className="filter-popover-head">
-                  <div><strong>Фільтри</strong><span>Змінюють усі показники на екрані</span></div>
-                  <button type="button" onClick={() => setFiltersOpen(false)} aria-label="Закрити фільтри">×</button>
-                </div>
-                <FilterSelect label="Місяць створення" items={allMonths} selected={selectedMonth}
-                  render={label} choose={setSelectedMonth} allLabel="Всі місяці" />
-                <FilterSelect label="Джерело" items={allSources} selected={selectedSource}
-                  choose={setSelectedSource} allLabel="Всі джерела" />
-                {view === "ld" ? (
-                  <FilterSelect label="Канал" items={allChannels} selected={selectedChannel}
-                    choose={setSelectedChannel} allLabel="Всі канали" />
-                ) : null}
-                <div className="filter-actions">
-                  <button className="clear-filters" type="button" onClick={resetFilters}>Скинути</button>
-                  <button className="apply-filters" type="button" onClick={() => setFiltersOpen(false)}>Готово</button>
-                </div>
-              </div>
-            ) : null}
+            <span className="topbar-divider" aria-hidden />
+            <div className="topbar-profile" title={sourceLabel}>
+              <span className="top-avatar" aria-hidden>{user.slice(0, 1).toUpperCase()}</span>
+              <span className="topbar-user"><strong>{user}</strong><small>Адміністратор</small></span>
+            </div>
+            <DashboardEditToolbar editor={editor} className="top-editor-toolbar" />
           </div>
-          <span className="topbar-divider" aria-hidden />
-          <div className="topbar-profile" title={sourceLabel}>
-            <span className="top-avatar" aria-hidden>{user.slice(0, 1).toUpperCase()}</span>
-            <span className="topbar-user"><strong>{user}</strong><small>Адміністратор</small></span>
-          </div>
-          <DashboardEditToolbar editor={editor} className="top-editor-toolbar" />
         </header>
 
-        {selectedSource || selectedChannel || query ? (
-          <div className="active-filter-bar" aria-label="Активні фільтри">
-            <span>Активні:</span>
-            {selectedSource ? <button type="button" onClick={() => setSelectedSource(null)}>{selectedSource} ×</button> : null}
-            {selectedChannel ? <button type="button" onClick={() => setSelectedChannel(null)}>{selectedChannel} ×</button> : null}
-            {query ? <button type="button" onClick={() => setQuery("")}>Пошук: {query} ×</button> : null}
+        <section className="workspace-heading">
+          <div>
+            <h1>{view === "db" ? "Огляд" : VIEWS.find(([v]) => v === view)?.[1]}</h1>
+            <p>Маркетингова аналітика за {selectedMonth ? label(selectedMonth) + " 2026" : "весь період"}</p>
           </div>
-        ) : null}
+          <div className="period-indicator" aria-label={"Поточний зріз: " + (selectedMonth ? label(selectedMonth) : "усі місяці")}><span>Період</span><b>{selectedMonth ? label(selectedMonth) : "Усі місяці"}</b></div>
+        </section>
+
+        <FilterChipBand
+          currentMonth={data.currentMonth}
+          allMonths={allMonths}
+          allSources={allSources}
+          allChannels={allChannels}
+          selectedMonth={selectedMonth}
+          selectedSource={selectedSource}
+          selectedChannel={selectedChannel}
+          isLeadsView={view === "ld"}
+          chooseMonth={setSelectedMonth}
+          chooseSource={setSelectedSource}
+          chooseChannel={setSelectedChannel}
+          reset={resetFilters}
+        />
 
         <div className={"workspace-view view-" + view}>
           {view === "db" && (
@@ -403,57 +418,141 @@ export default function Dashboard({ user }: { user: string }) {
 
         <p className="data-footnote" title={sourceLabel}>Excel · оновлено {stamp}</p>
       </main>
+      <ActivityRail deals={deals} totals={totals} stamp={stamp} onOpenSources={() => setView("sr")} />
     </div>
   );
 }
 
-function Sidebar({ view, setView, onLogout }: { view: View; setView: (v: View) => void; onLogout?: () => void }) {
+function Sidebar({ view, setView, user, onLogout }: { view: View; setView: (v: View) => void; user: string; onLogout?: () => void }) {
   return (
     <aside className="sidebar">
-      <div className="brand">
-        <span className="brand-mark" aria-hidden>✦</span>
-        <span>MOODua</span>
+      <div className="sidebar-brand">
+        <span className="sidebar-avatar" aria-hidden>M</span>
+        <span><strong>MOODua</strong><small>Наскрізна аналітика</small></span>
+      </div>
+
+      <div className="sidebar-tabs" aria-label="Навігація">
+        <span className="is-active">Обране</span>
+        <span>Останні</span>
       </div>
 
       <div className="sidebar-content">
-        <div className="navlbl">Огляд</div>
+        <div className="navlbl">Аналітика</div>
         <nav className="nav" aria-label="Аналітика">
           {VIEWS.map(([v, name]) => (
             <button key={v} aria-current={view === v ? "page" : undefined}
               onClick={(event) => { event.currentTarget.blur(); setView(v); }}>
-              <span className="nav-icon" aria-hidden>{NAV_ICONS[v]}</span>
+              <span className="nav-icon" aria-hidden><Icon name={NAV_ICONS[v]} /></span>
               {name}
             </button>
           ))}
         </nav>
 
         <div className="navlbl">Дані</div>
-        <div className="nav">
-          <button className="static" type="button"><span className="nav-icon" aria-hidden>◫</span>Угоди · 2026</button>
-          <button className="static" type="button"><span className="nav-icon" aria-hidden>◌</span>All leads · 2026</button>
+        <div className="nav nav-static-list">
+          <span className="nav-static"><span className="nav-icon" aria-hidden><Icon name="deals" /></span>Угоди · 2026</span>
+          <span className="nav-static"><span className="nav-icon" aria-hidden><Icon name="leads" /></span>All leads · 2026</span>
         </div>
       </div>
 
       <div className="sidebar-footer">
-        <button className="sidebar-settings static" type="button"><span className="nav-icon" aria-hidden>⚙</span>Налаштування</button>
-        {onLogout ? <button className="logout" type="button" onClick={onLogout}>Вийти</button> : null}
+        <div className="sidebar-user"><span className="sidebar-avatar small" aria-hidden>{user.slice(0, 1).toUpperCase()}</span><span><b>{user}</b><small>Адміністратор</small></span></div>
+        {onLogout ? <button className="logout" type="button" onClick={onLogout}><Icon name="logout" />Вийти</button> : null}
       </div>
     </aside>
   );
 }
 
-function FilterSelect({ label: title, items, selected, choose, render, allLabel }: {
-  label: string; items: string[]; selected: string | null;
-  choose: (v: string | null) => void; render?: (v: string) => string; allLabel: string;
+function FilterChipBand({
+  currentMonth,
+  allMonths,
+  allSources,
+  allChannels,
+  selectedMonth,
+  selectedSource,
+  selectedChannel,
+  isLeadsView,
+  chooseMonth,
+  chooseSource,
+  chooseChannel,
+  reset,
+}: {
+  currentMonth: string;
+  allMonths: string[];
+  allSources: string[];
+  allChannels: string[];
+  selectedMonth: string | null;
+  selectedSource: string | null;
+  selectedChannel: string | null;
+  isLeadsView: boolean;
+  chooseMonth: (value: string | null) => void;
+  chooseSource: (value: string | null) => void;
+  chooseChannel: (value: string | null) => void;
+  reset: () => void;
+}) {
+  const hasFilters = selectedMonth !== currentMonth || Boolean(selectedSource || selectedChannel);
+  return (
+    <section className="wide-filters" aria-label="Фільтри аналітики">
+      <div className="wide-filters-head">
+        <div>
+          <strong>Фільтри</strong>
+          <span>Застосовуються до всіх показників на екрані</span>
+        </div>
+        {hasFilters ? <button type="button" onClick={reset}>Скинути</button> : <span className="wide-filter-hint">Оберіть зріз даних</span>}
+      </div>
+      <FilterChipRow
+        label="Період"
+        items={[
+          { id: "current", label: "Поточний місяць", active: selectedMonth === currentMonth, onClick: () => chooseMonth(currentMonth) },
+          { id: "all-period", label: "За весь період", active: selectedMonth === null, onClick: () => chooseMonth(null) },
+        ]}
+      />
+      <FilterChipRow
+        label="Місяць створення"
+        scrollable
+        items={[
+          { id: "all-months", label: "Усі місяці", active: selectedMonth === null, onClick: () => chooseMonth(null) },
+          ...allMonths.map((month) => ({ id: month, label: label(month), active: selectedMonth === month, onClick: () => chooseMonth(month) })),
+        ]}
+      />
+      <FilterChipRow
+        label="Джерело"
+        scrollable
+        items={[
+          { id: "all-sources", label: "Усі джерела", active: selectedSource === null, onClick: () => chooseSource(null) },
+          ...allSources.map((source) => ({ id: source, label: source, active: selectedSource === source, onClick: () => chooseSource(source) })),
+        ]}
+      />
+      {isLeadsView ? (
+        <FilterChipRow
+          label="Канал"
+          scrollable
+          items={[
+            { id: "all-channels", label: "Усі канали", active: selectedChannel === null, onClick: () => chooseChannel(null) },
+            ...allChannels.map((channel) => ({ id: channel, label: channel, active: selectedChannel === channel, onClick: () => chooseChannel(channel) })),
+          ]}
+        />
+      ) : null}
+    </section>
+  );
+}
+
+function FilterChipRow({ label: title, items, scrollable = false }: {
+  label: string;
+  scrollable?: boolean;
+  items: Array<{ id: string; label: string; active: boolean; onClick: () => void }>;
 }) {
   return (
-    <label className="filter-select">
-      <span className="fl">{title}</span>
-      <select value={selected ?? ""} onChange={(event) => choose(event.target.value || null)}>
-        <option value="">{allLabel}</option>
-        {items.map((value) => <option key={value} value={value}>{render ? render(value) : value}</option>)}
-      </select>
-    </label>
+    <div className="filter-chip-row">
+      <span className="filter-chip-label">{title}</span>
+      <div className={"filter-chip-track" + (scrollable ? " is-scrollable" : "")} role="group" aria-label={title}>
+        {items.map((item) => (
+          <button key={item.id} type="button" aria-pressed={item.active} className={item.active ? "is-active" : ""} onClick={item.onClick}>
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -539,6 +638,8 @@ type DashboardSourceSummary = {
   lostCount: number;
 };
 
+type DashboardChartMode = "revenue" | "pipeline" | "leads";
+
 function DashboardView({ deals, clients, leads, totals, months, periodLabel, onViewChange, editor, metrics, chartSeries }: {
   deals: MonthRow[];
   clients: ClientRow[];
@@ -551,10 +652,19 @@ function DashboardView({ deals, clients, leads, totals, months, periodLabel, onV
   metrics: DashboardFormulaMetric[];
   chartSeries: DashboardChartSeries[];
 }) {
+  const [chartMode, setChartMode] = useState<DashboardChartMode>("revenue");
   const leadTotal = leads.reduce((sum, row) => sum + row.total, 0);
-  const perMonth = months.map((month) => ({
+  const revenueByMonth = months.map((month) => ({
     m: month,
     won: deals.filter((row) => row.month === month).reduce((sum, row) => sum + row.won, 0),
+  }));
+  const pipelineByMonth = months.map((month) => ({
+    m: month,
+    won: deals.filter((row) => row.month === month).reduce((sum, row) => sum + row.pipeline, 0),
+  }));
+  const leadsByMonth = months.map((month) => ({
+    m: month,
+    won: leads.filter((row) => row.month === month).reduce((sum, row) => sum + row.total, 0),
   }));
   const sourceRows: DashboardSourceSummary[] = [...byKey(deals, "source", ["won", "wonCount", "pipeline", "pipelineCount", "lost", "lostCount"])]
     .map(([source, values]) => ({
@@ -567,7 +677,6 @@ function DashboardView({ deals, clients, leads, totals, months, periodLabel, onV
       lostCount: values.lostCount ?? 0,
     }))
     .sort((a, b) => b.won - a.won || b.pipeline - a.pipeline);
-  const dealTotal = totals.pipelineCount + totals.wonCount + totals.lostCount;
   const companies: Array<Pick<ClientRow, "company" | "won" | "wonCount" | "openPipeline" | "openCount">> =
     [...byKey(clients, "company", ["won", "wonCount", "openPipeline", "openCount"])]
       .map(([company, values]) => ({
@@ -580,236 +689,168 @@ function DashboardView({ deals, clients, leads, totals, months, periodLabel, onV
   const topRevenue = companies.filter((row) => row.won > 0).sort((a, b) => b.won - a.won).slice(0, 5);
   const topOpenPipeline = companies.filter((row) => row.openPipeline > 0).sort((a, b) => b.openPipeline - a.openPipeline).slice(0, 5);
   const winRate = pct(totals.wonCount, totals.wonCount + totals.lostCount);
+  const sourceMax = Math.max(...sourceRows.map((row) => row.won), 1);
+  const chart = {
+    revenue: { label: "Виручка", hint: "лише виграні угоди", data: revenueByMonth },
+    pipeline: { label: "Пайплайн", hint: "відкриті угоди", data: pipelineByMonth },
+    leads: { label: "Ліди", hint: "нові ліди за місяцем", data: leadsByMonth },
+  }[chartMode];
 
   const blocks: EditableBlockDefinition[] = [
     {
       id: "dashboard-kpis",
       title: "Ключові показники",
       children: (
-        <section className="quick-section" aria-labelledby="quick-metrics-title">
-          <div className="section-heading compact-heading">
-            <div><h2 id="quick-metrics-title">Ключові показники</h2><p>Зріз за вибраним періодом</p></div>
-          </div>
-          <div className="quick-grid">
-            <article className="quick-card">
-              <span className="metric-icon lead-icon" aria-hidden>◌</span>
-              <div><small>Ліди</small><strong>{uah(leadTotal)}</strong><span>з бази All leads</span></div>
-              <button type="button" className="card-menu" onClick={() => onViewChange("ld")} aria-label="Відкрити ліди">⋮</button>
-            </article>
-            <article className="quick-card">
-              <span className="metric-icon pipeline-icon" aria-hidden>◫</span>
-              <div><small>Пайплайн</small><strong>{short(totals.pipeline)} ₴</strong><span>{totals.pipelineCount} відкритих угод</span></div>
-              <button type="button" className="card-menu" onClick={() => onViewChange("dl")} aria-label="Відкрити угоди">⋮</button>
-            </article>
-            <article className="quick-card">
-              <span className="metric-icon rate-icon" aria-hidden>◔</span>
-              <div><small>Win rate</small><strong>{winRate.toFixed(0)}%</strong><span>{totals.wonCount} виграно</span></div>
-              <button type="button" className="card-menu" onClick={() => onViewChange("sr")} aria-label="Відкрити джерела">⋮</button>
-            </article>
+        <section className="snow-kpi-section" aria-label="Ключові показники">
+          <div className="snow-kpis">
+            <button type="button" className="snow-kpi snow-kpi-lilac" onClick={() => onViewChange("dl")}>
+              <span>Виручка</span><strong>{short(totals.won)} ₴</strong><small>{totals.wonCount} виграних угод <i>↗</i></small>
+            </button>
+            <button type="button" className="snow-kpi snow-kpi-blue" onClick={() => onViewChange("dl")}>
+              <span>Пайплайн</span><strong>{short(totals.pipeline)} ₴</strong><small>{totals.pipelineCount} відкритих угод <i>↗</i></small>
+            </button>
+            <button type="button" className="snow-kpi snow-kpi-lilac" onClick={() => onViewChange("ld")}>
+              <span>Ліди</span><strong>{uah(leadTotal)}</strong><small>за {periodLabel} <i>↗</i></small>
+            </button>
+            <button type="button" className="snow-kpi snow-kpi-blue" onClick={() => onViewChange("sr")}>
+              <span>Win rate</span><strong>{winRate.toFixed(0)}%</strong><small>{totals.lostCount} програно <i>↗</i></small>
+            </button>
           </div>
         </section>
       ),
     },
     {
       id: "dashboard-revenue",
-      title: "Джерела та динаміка",
+      title: "Динаміка та джерела",
       children: (
-        <>
-          <SourceCarousel rows={sourceRows} totalRevenue={totals.won} onOpenSources={() => onViewChange("sr")} />
-          <div className="grid g21">
-            <div className="card">
-              <div className="ch">Виручка за місяцями <small>за місяцем створення угоди</small></div>
-              <LineChart data={perMonth} />
+        <div className="snow-dashboard-grid snow-primary-grid">
+          <section className="snow-card snow-line-card">
+            <div className="snow-card-header snow-line-header">
+              <div className="snow-tabs" role="tablist" aria-label="Показник графіка">
+                {(["revenue", "pipeline", "leads"] as DashboardChartMode[]).map((mode) => (
+                  <button key={mode} type="button" role="tab" aria-selected={chartMode === mode} onClick={() => setChartMode(mode)}>
+                    {({ revenue: "Виручка", pipeline: "Пайплайн", leads: "Ліди" })[mode]}
+                  </button>
+                ))}
+              </div>
+              <span className="snow-chart-period">{chart.hint}</span>
             </div>
-            <div className="card">
-              <div className="ch">Виручка за джерелами</div>
-              <Donut rows={sourceRows.map((row) => [row.source, row.won] as [string, number])} />
+            <div className="snow-chart-title"><strong>{chart.label}</strong><span>{periodLabel}</span></div>
+            <LineChart
+              data={chart.data}
+              secondary={chartMode === "revenue" ? pipelineByMonth : chartMode === "pipeline" ? revenueByMonth : undefined}
+            />
+          </section>
+          <section className="snow-card snow-source-card">
+            <div className="snow-card-header"><h2>Результат за джерелами</h2><button type="button" className="snow-icon-button" onClick={() => onViewChange("sr")} aria-label="Відкрити всі джерела">→</button></div>
+            <div className="snow-source-list">
+              {sourceRows.slice(0, 6).map((row) => (
+                <button type="button" className="snow-source-row" key={row.source} onClick={() => onViewChange("sr")}>
+                  <span>{row.source}</span>
+                  <i><b style={{ width: String(Math.max(4, (row.won / sourceMax) * 100)) + "%" }} /></i>
+                  <strong>{short(row.won)} ₴</strong>
+                </button>
+              ))}
+              {!sourceRows.length ? <p className="empty">Немає джерел за фільтром</p> : null}
             </div>
-          </div>
-        </>
+          </section>
+        </div>
       ),
     },
     {
       id: "dashboard-clients",
+      title: "Структура результату",
+      children: (
+        <div className="snow-dashboard-grid snow-secondary-grid">
+          <section className="snow-card">
+            <div className="snow-card-header"><h2>Угоди за статусом</h2><span>за активним зрізом</span></div>
+            <Bars rows={[["Відкриті", totals.pipelineCount], ["Виграні", totals.wonCount], ["Програні", totals.lostCount]]} />
+          </section>
+          <section className="snow-card">
+            <div className="snow-card-header"><h2>Виручка за джерелами</h2><button type="button" className="snow-icon-button" onClick={() => onViewChange("sr")} aria-label="Відкрити джерела">→</button></div>
+            <Donut rows={sourceRows.map((row) => [row.source, row.won] as [string, number])} />
+          </section>
+        </div>
+      ),
+    },
+    {
+      id: "dashboard-funnel",
       title: "Пріоритетні угоди",
       children: (
-        <section className="priority-section">
-          <div className="section-heading">
-            <div><h2>Пріоритетні угоди</h2><p>Клієнти з найбільшим результатом і відкритим потенціалом</p></div>
-            <button className="section-link" type="button" onClick={() => onViewChange("dl")}>Усі угоди <span>→</span></button>
+        <section className="snow-card snow-table-card">
+          <div className="snow-card-header">
+            <div><h2>Пріоритетні угоди</h2><span>Клієнти з найбільшим фінансовим потенціалом</span></div>
+            <button type="button" className="snow-link-button" onClick={() => onViewChange("dl")}>Усі угоди →</button>
           </div>
-          <div className="grid g11">
-            <div className="card">
-              <div className="ch">Топ клієнтів <small>лише виграні угоди</small></div>
-              <div className="table-wrap"><table>
-                <thead><tr><th>Компанія</th><th>Виграно</th><th>Виручка</th></tr></thead>
-                <tbody>
-                  {topRevenue.length === 0 ? <tr><td colSpan={3} className="empty">Немає виграних угод за фільтром</td></tr> : null}
-                  {topRevenue.map((row) => <tr key={row.company}><td>{row.company}</td><td>{row.wonCount}</td><td>{uah(row.won)} ₴</td></tr>)}
-                </tbody>
-              </table></div>
+          <div className="snow-table-grid">
+            <div className="snow-mini-table">
+              <h3>Топ клієнтів</h3>
+              {topRevenue.length === 0 ? <p className="empty">Немає виграних угод</p> : topRevenue.map((row) => (
+                <button type="button" key={row.company} onClick={() => onViewChange("dl")}><span>{row.company}</span><small>{row.wonCount} угод</small><b>{short(row.won)} ₴</b></button>
+              ))}
             </div>
-            <div className="card">
-              <div className="ch">Топ відкритих угод <small>без виграних і програних</small></div>
-              <div className="table-wrap"><table>
-                <thead><tr><th>Компанія</th><th>Відкрито</th><th>Пайплайн</th></tr></thead>
-                <tbody>
-                  {topOpenPipeline.length === 0 ? <tr><td colSpan={3} className="empty">Немає відкритих угод за фільтром</td></tr> : null}
-                  {topOpenPipeline.map((row) => <tr key={row.company}><td>{row.company}</td><td>{row.openCount}</td><td>{uah(row.openPipeline)} ₴</td></tr>)}
-                </tbody>
-              </table></div>
+            <div className="snow-mini-table">
+              <h3>Відкритий потенціал</h3>
+              {topOpenPipeline.length === 0 ? <p className="empty">Немає відкритих угод</p> : topOpenPipeline.map((row) => (
+                <button type="button" key={row.company} onClick={() => onViewChange("dl")}><span>{row.company}</span><small>{row.openCount} угод</small><b>{short(row.openPipeline)} ₴</b></button>
+              ))}
             </div>
           </div>
         </section>
       ),
     },
-    {
-      id: "dashboard-funnel",
-      title: "Воронка угод",
-      children: <div className="grid g11">
-        <div className="card">
-          <div className="ch">Розподіл угод</div>
-          <Bars rows={[["Відкриті", totals.pipelineCount], ["Виграні", totals.wonCount], ["Програні", totals.lostCount]]} />
-        </div>
-        <div className="card">
-          <div className="ch">Наскрізна воронка</div>
-          <Funnel steps={[
-            ["Ліди", leadTotal],
-            ["MQL + SQL", leads.reduce((sum, row) => sum + row.mql + row.sql_, 0)],
-            ["Запити в CRM", totals.pipelineCount],
-            ["Виграно", totals.wonCount],
-          ]} />
-          <div className="note">Угоди зараховані в місяць створення в Excel-файлі. Дані беруться тільки з баз «Угоди_2026» та «All leads».</div>
-        </div>
-      </div>,
-    },
   ];
 
-  return (
-    <div className="dashboard-layout">
-      <div className="dashboard-left">
-        <section className="overview-hero">
-          <div className="hero-copy">
-            <span className="hero-eyebrow">MOODua Analytics</span>
-            <h1>Результати маркетингу<br />за {periodLabel}</h1>
-            <p>Виграно {totals.wonCount} угод на {short(totals.won)} ₴</p>
-            <button type="button" onClick={() => onViewChange("dl")}>Перейти до угод <span aria-hidden>→</span></button>
-          </div>
-          <div className="hero-sparkles" aria-hidden><i /><i /><i /></div>
-        </section>
-        <EditableBlocks editor={editor} blocks={blocks} metrics={metrics} chartSeries={chartSeries} />
-      </div>
-      <DashboardSummaryRail
-        winRate={winRate}
-        totals={totals}
-        perMonth={perMonth}
-        sourceRows={sourceRows}
-        onOpenSources={() => onViewChange("sr")}
-      />
-    </div>
-  );
+  return <EditableBlocks editor={editor} blocks={blocks} metrics={metrics} chartSeries={chartSeries} />;
 }
 
-function SourceCarousel({ rows, totalRevenue, onOpenSources }: {
-  rows: DashboardSourceSummary[];
-  totalRevenue: number;
-  onOpenSources: () => void;
-}) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const scroll = (direction: number) => trackRef.current?.scrollBy({ left: direction * 388, behavior: "smooth" });
-  return (
-    <section className="source-carousel">
-      <div className="section-heading">
-        <div><h2>Канали з потенціалом</h2><p>Джерела, де варто сфокусувати наступний бюджет</p></div>
-        <div className="carousel-actions">
-          <button type="button" onClick={() => scroll(-1)} aria-label="Попередні джерела">‹</button>
-          <button type="button" onClick={() => scroll(1)} aria-label="Наступні джерела">›</button>
-        </div>
-      </div>
-      <div className="source-track" ref={trackRef} tabIndex={0} aria-label="Карусель джерел">
-        {rows.length === 0 ? <p className="empty source-empty">Немає даних за фільтром</p> : null}
-        {rows.slice(0, 8).map((row, index) => {
-          const closed = row.wonCount + row.lostCount;
-          const rate = pct(row.wonCount, closed);
-          const share = totalRevenue ? Math.max(4, Math.min(100, pct(row.won, totalRevenue))) : 4;
-          const signal = Math.max(12, Math.min(100, rate));
-          return (
-            <article className="source-insight-card" key={row.source}>
-              <div className="source-visual">
-                <div className="source-card-head">
-                  <span className="source-token" style={{ background: colour(row.source) }} />
-                  <span className="source-order">0{index + 1}</span>
-                  <button type="button" aria-label={"Відкрити " + row.source} onClick={onOpenSources}>↗</button>
-                </div>
-                <div className="source-signal" aria-hidden>
-                  <i style={{ height: String(Math.max(24, signal * .54)) + "%" }} />
-                  <i style={{ height: String(Math.max(34, share * .74)) + "%" }} />
-                  <i style={{ height: String(Math.max(20, signal)) + "%" }} />
-                  <i style={{ height: String(Math.max(30, share)) + "%" }} />
-                </div>
-                <span className="source-visual-caption">ефективність каналу</span>
-              </div>
-              <div className="source-card-body">
-                <small>{row.source}</small>
-                <strong>{short(row.won)} ₴</strong>
-                <span>{row.wonCount} виграно · {rate.toFixed(0)}% win rate</span>
-                <div className="source-progress"><i style={{ width: String(share) + "%" }} /></div>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function DashboardSummaryRail({ winRate, totals, perMonth, sourceRows, onOpenSources }: {
-  winRate: number;
+function ActivityRail({ deals, totals, stamp, onOpenSources }: {
+  deals: MonthRow[];
   totals: Record<string, number>;
-  perMonth: Array<{ m: string; won: number }>;
-  sourceRows: DashboardSourceSummary[];
+  stamp: string;
   onOpenSources: () => void;
 }) {
-  const rate = Math.max(0, Math.min(100, winRate));
-  const max = Math.max(...perMonth.map((item) => item.won), 1);
-  const totalClosed = totals.wonCount + totals.lostCount;
+  const sources: DashboardSourceSummary[] = [...byKey(deals, "source", ["won", "wonCount", "pipeline", "pipelineCount", "lost", "lostCount"])]
+    .map(([source, values]) => ({
+      source,
+      won: values.won ?? 0,
+      wonCount: values.wonCount ?? 0,
+      pipeline: values.pipeline ?? 0,
+      pipelineCount: values.pipelineCount ?? 0,
+      lost: values.lost ?? 0,
+      lostCount: values.lostCount ?? 0,
+    }))
+    .sort((a, b) => b.won - a.won || b.pipeline - a.pipeline);
+  const topSource = sources[0];
+  const updates: Array<[IconName, string, string]> = [
+    ["refresh", "Дані оновлено", stamp],
+    ["check", "Виграні угоди", totals.wonCount + " на " + short(totals.won) + " ₴"],
+    ["deals", "Відкритий пайплайн", totals.pipelineCount + " угод"],
+    ["target", topSource ? "Найсильніше джерело" : "Джерела", topSource ? topSource.source : "Немає даних"],
+  ];
   return (
-    <aside className="summary-rail" aria-label="Зведення періоду">
-      <section className="summary-card">
-        <div className="summary-heading"><h2>Статистика</h2><button type="button" aria-label="Більше дій">⋮</button></div>
-        <div className="win-ring-wrap">
-          <div className="win-ring" style={{ background: "conic-gradient(var(--teal) " + rate + "%, var(--rail-track) " + rate + "% 100%)" }}>
-            <div><strong>{rate.toFixed(0)}%</strong><span>Win rate</span></div>
-          </div>
-        </div>
-        <div className="summary-caption">
-          <strong>{totals.wonCount} виграно з {totalClosed}</strong>
-          <span>Угоди за активним фільтром</span>
-        </div>
-        <div className="rail-chart">
-          <div className="rail-chart-head"><span>Виручка за місяцями</span><b>{short(totals.won)} ₴</b></div>
-          <div className="mini-bars">
-            {perMonth.length === 0 ? <span className="empty">Немає даних</span> : null}
-            {perMonth.slice(-6).map((item) => (
-              <div className="mini-bar" key={item.m}>
-                <i style={{ height: String(Math.max(8, (item.won / max) * 100)) + "%" }} />
-                <span>{label(item.m)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="rail-section-head"><h3>Топ джерела</h3><button type="button" onClick={onOpenSources} aria-label="Відкрити всі джерела">+</button></div>
-        <div className="rail-source-list">
-          {sourceRows.slice(0, 3).map((row) => (
-            <button className="rail-source-row" type="button" key={row.source} onClick={onOpenSources}>
-              <span className="source-token" style={{ background: colour(row.source) }} />
-              <span><strong>{row.source}</strong><small>{row.wonCount} виграно</small></span>
-              <b>{short(row.won)} ₴</b>
-            </button>
+    <aside className="activity-rail" aria-label="Оновлення аналітики">
+      <section className="activity-section">
+        <div className="activity-heading"><h2>Оновлення</h2><button type="button" aria-label="Оновити дані" onClick={() => window.location.reload()}><Icon name="refresh" /></button></div>
+        <div className="activity-list">
+          {updates.map(([icon, title, detail]) => (
+            <article className="activity-item" key={title}>
+              <span className="activity-icon" aria-hidden><Icon name={icon} /></span>
+              <span><strong>{title}</strong><small>{detail}</small></span>
+            </article>
           ))}
-          {sourceRows.length === 0 ? <p className="empty">Немає джерел</p> : null}
         </div>
-        <button className="rail-all" type="button" onClick={onOpenSources}>Усі джерела <span>→</span></button>
+      </section>
+      <section className="activity-section activity-sources">
+        <div className="activity-heading"><h2>Топ джерела</h2><button type="button" onClick={onOpenSources} aria-label="Відкрити всі джерела"><Icon name="plus" /></button></div>
+        {sources.slice(0, 5).map((row, index) => (
+          <button type="button" className="activity-source" key={row.source} onClick={onOpenSources}>
+            <span className="activity-source-index">0{index + 1}</span>
+            <span><strong>{row.source}</strong><small>{row.wonCount} виграно</small></span>
+            <b>{short(row.won)} ₴</b>
+          </button>
+        ))}
+        {!sources.length ? <p className="empty">Немає джерел</p> : null}
       </section>
     </aside>
   );
@@ -1102,14 +1143,20 @@ function SourcesView({ deals, editor, metrics, chartSeries }: {
 }
 
 /* --------------------------------- Charts -------------------------------- */
-function LineChart({ data }: { data: Array<{ m: string; won: number }> }) {
-  const W = 640, H = 224, P = { t: 12, r: 16, b: 26, l: 48 };
-  const mx = Math.max(...data.map((d) => d.won), 1);
-  const X = (i: number) => P.l + (W - P.l - P.r) * (data.length > 1 ? i / (data.length - 1) : 0.5);
+function LineChart({ data, secondary }: {
+  data: Array<{ m: string; won: number }>;
+  secondary?: Array<{ m: string; won: number }>;
+}) {
+  const W = 700, H = 276, P = { t: 20, r: 16, b: 32, l: 54 };
+  const values = [...data, ...(secondary ?? [])].map((item) => item.won);
+  const mx = Math.max(...values, 1);
+  const X = (i: number, length = data.length) => P.l + (W - P.l - P.r) * (length > 1 ? i / (length - 1) : 0.5);
   const Y = (v: number) => P.t + (H - P.t - P.b) * (1 - v / mx);
-  const path = data.map((d, i) => `${i ? "L" : "M"}${X(i)},${Y(d.won)}`).join(" ");
+  const path = (series: Array<{ m: string; won: number }>) => series.map((d, i) => `${i ? "L" : "M"}${X(i, series.length)},${Y(d.won)}`).join(" ");
+  const primaryPath = path(data);
+  const secondaryPath = secondary?.length ? path(secondary) : "";
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Виручка по місяцях">
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Динаміка показників по місяцях">
       {[0, 1, 2, 3, 4].map((i) => {
         const v = (mx / 4) * i;
         return (
@@ -1119,16 +1166,13 @@ function LineChart({ data }: { data: Array<{ m: string; won: number }> }) {
           </g>
         );
       })}
-      {data.length > 1 && (
-        <>
-          <path d={`${path} L${X(data.length - 1)},${H - P.b} L${X(0)},${H - P.b} Z`} fill="var(--chart-fill)" />
-          <path d={path} fill="none" stroke="var(--accent-deep)" strokeWidth={2.5} strokeLinejoin="round" />
-        </>
-      )}
+      {secondaryPath ? <path d={secondaryPath} fill="none" stroke="var(--accent-line)" strokeWidth={2} strokeDasharray="4 7" strokeLinecap="round" /> : null}
+      {data.length > 1 ? <path d={`${primaryPath} L${X(data.length - 1)},${H - P.b} L${X(0)},${H - P.b} Z`} fill="var(--chart-fill)" /> : null}
+      <path d={primaryPath} fill="none" stroke="var(--ink)" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
       {data.map((d, i) => (
         <g key={d.m}>
-          <circle cx={X(i)} cy={Y(d.won)} r={4} fill="#fff" stroke="var(--accent-deep)" strokeWidth={2} />
-          <text className="ax" x={X(i)} y={H - P.b + 16} textAnchor="middle">{label(d.m)}</text>
+          <circle cx={X(i)} cy={Y(d.won)} r={3.5} fill="var(--card)" stroke="var(--ink)" strokeWidth={1.7} />
+          <text className="ax" x={X(i)} y={H - P.b + 18} textAnchor="middle">{label(d.m)}</text>
         </g>
       ))}
     </svg>
