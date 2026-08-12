@@ -121,6 +121,15 @@ export default function Dashboard({ user }: { user: string }) {
     }).catch(() => undefined);
   }, [load]);
 
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFiltersOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [filtersOpen]);
+
   const allMonths = useMemo(() => {
     if (!data) return [];
     const s = new Set<string>([...data.byMonth.map((r) => r.month), ...data.leads.map((r) => r.month)]);
@@ -322,6 +331,7 @@ export default function Dashboard({ user }: { user: string }) {
             {loading ? "…" : "↻"}
           </button>
           <div className="filter-control">
+            {filtersOpen ? <button type="button" className="filter-backdrop" onClick={() => setFiltersOpen(false)} aria-label="Закрити фільтри" /> : null}
             <button
               className={"filters-trigger" + (activeFilterCount ? " has-active" : "")}
               type="button"
@@ -706,11 +716,11 @@ function SourceCarousel({ rows, totalRevenue, onOpenSources }: {
   onOpenSources: () => void;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const scroll = (direction: number) => trackRef.current?.scrollBy({ left: direction * 302, behavior: "smooth" });
+  const scroll = (direction: number) => trackRef.current?.scrollBy({ left: direction * 388, behavior: "smooth" });
   return (
     <section className="source-carousel">
       <div className="section-heading">
-        <div><h2>Канали з потенціалом</h2><p>Джерела за виручкою у вибраному зрізі</p></div>
+        <div><h2>Канали з потенціалом</h2><p>Джерела, де варто сфокусувати наступний бюджет</p></div>
         <div className="carousel-actions">
           <button type="button" onClick={() => scroll(-1)} aria-label="Попередні джерела">‹</button>
           <button type="button" onClick={() => scroll(1)} aria-label="Наступні джерела">›</button>
@@ -718,17 +728,33 @@ function SourceCarousel({ rows, totalRevenue, onOpenSources }: {
       </div>
       <div className="source-track" ref={trackRef} tabIndex={0} aria-label="Карусель джерел">
         {rows.length === 0 ? <p className="empty source-empty">Немає даних за фільтром</p> : null}
-        {rows.slice(0, 8).map((row) => {
+        {rows.slice(0, 8).map((row, index) => {
           const closed = row.wonCount + row.lostCount;
           const rate = pct(row.wonCount, closed);
           const share = totalRevenue ? Math.max(4, Math.min(100, pct(row.won, totalRevenue))) : 4;
+          const signal = Math.max(12, Math.min(100, rate));
           return (
             <article className="source-insight-card" key={row.source}>
-              <div className="source-card-head"><span className="source-token" style={{ background: colour(row.source) }} /><button type="button" aria-label={"Відкрити " + row.source} onClick={onOpenSources}>↗</button></div>
-              <small>{row.source}</small>
-              <strong>{short(row.won)} ₴</strong>
-              <span>{row.wonCount} виграно · {rate.toFixed(0)}% win rate</span>
-              <div className="source-progress"><i style={{ width: String(share) + "%" }} /></div>
+              <div className="source-visual">
+                <div className="source-card-head">
+                  <span className="source-token" style={{ background: colour(row.source) }} />
+                  <span className="source-order">0{index + 1}</span>
+                  <button type="button" aria-label={"Відкрити " + row.source} onClick={onOpenSources}>↗</button>
+                </div>
+                <div className="source-signal" aria-hidden>
+                  <i style={{ height: String(Math.max(24, signal * .54)) + "%" }} />
+                  <i style={{ height: String(Math.max(34, share * .74)) + "%" }} />
+                  <i style={{ height: String(Math.max(20, signal)) + "%" }} />
+                  <i style={{ height: String(Math.max(30, share)) + "%" }} />
+                </div>
+                <span className="source-visual-caption">ефективність каналу</span>
+              </div>
+              <div className="source-card-body">
+                <small>{row.source}</small>
+                <strong>{short(row.won)} ₴</strong>
+                <span>{row.wonCount} виграно · {rate.toFixed(0)}% win rate</span>
+                <div className="source-progress"><i style={{ width: String(share) + "%" }} /></div>
+              </div>
             </article>
           );
         })}
