@@ -418,7 +418,6 @@ export default function Dashboard({ user }: { user: string }) {
 
         <p className="data-footnote" title={sourceLabel}>Excel · оновлено {stamp}</p>
       </main>
-      <ActivityRail deals={deals} totals={totals} stamp={stamp} onOpenSources={() => setView("sr")} />
     </div>
   );
 }
@@ -735,12 +734,16 @@ function DashboardView({ deals, clients, leads, totals, months, periodLabel, onV
               secondary={chartMode === "revenue" ? pipelineByMonth : chartMode === "pipeline" ? revenueByMonth : undefined}
             />
           </section>
-          <section className="snow-card snow-source-card">
-            <div className="snow-card-header"><h2>Результат за джерелами</h2><button type="button" className="snow-icon-button" onClick={() => onViewChange("sr")} aria-label="Відкрити всі джерела">→</button></div>
+          <section className="snow-card snow-source-card" aria-label="Топ джерела">
+            <div className="snow-card-header">
+              <div><h2>Топ джерела</h2><span>за виручкою</span></div>
+              <button type="button" className="snow-icon-button" onClick={() => onViewChange("sr")} aria-label="Відкрити всі джерела">→</button>
+            </div>
             <div className="snow-source-list">
-              {sourceRows.slice(0, 6).map((row) => (
+              {sourceRows.slice(0, 6).map((row, index) => (
                 <button type="button" className="snow-source-row" key={row.source} onClick={() => onViewChange("sr")}>
-                  <span>{row.source}</span>
+                  <em>{String(index + 1).padStart(2, "0")}</em>
+                  <span><b>{row.source}</b><small>{row.wonCount} виграно</small></span>
                   <i><b style={{ width: String(Math.max(4, (row.won / sourceMax) * 100)) + "%" }} /></i>
                   <strong>{short(row.won)} ₴</strong>
                 </button>
@@ -796,58 +799,6 @@ function DashboardView({ deals, clients, leads, totals, months, periodLabel, onV
   ];
 
   return <EditableBlocks editor={editor} blocks={blocks} metrics={metrics} chartSeries={chartSeries} />;
-}
-
-function ActivityRail({ deals, totals, stamp, onOpenSources }: {
-  deals: MonthRow[];
-  totals: Record<string, number>;
-  stamp: string;
-  onOpenSources: () => void;
-}) {
-  const sources: DashboardSourceSummary[] = [...byKey(deals, "source", ["won", "wonCount", "pipeline", "pipelineCount", "lost", "lostCount"])]
-    .map(([source, values]) => ({
-      source,
-      won: values.won ?? 0,
-      wonCount: values.wonCount ?? 0,
-      pipeline: values.pipeline ?? 0,
-      pipelineCount: values.pipelineCount ?? 0,
-      lost: values.lost ?? 0,
-      lostCount: values.lostCount ?? 0,
-    }))
-    .sort((a, b) => b.won - a.won || b.pipeline - a.pipeline);
-  const topSource = sources[0];
-  const updates: Array<[IconName, string, string]> = [
-    ["refresh", "Дані оновлено", stamp],
-    ["check", "Виграні угоди", totals.wonCount + " на " + short(totals.won) + " ₴"],
-    ["deals", "Відкритий пайплайн", totals.pipelineCount + " угод"],
-    ["target", topSource ? "Найсильніше джерело" : "Джерела", topSource ? topSource.source : "Немає даних"],
-  ];
-  return (
-    <aside className="activity-rail" aria-label="Оновлення аналітики">
-      <section className="activity-section">
-        <div className="activity-heading"><h2>Оновлення</h2><button type="button" aria-label="Оновити дані" onClick={() => window.location.reload()}><Icon name="refresh" /></button></div>
-        <div className="activity-list">
-          {updates.map(([icon, title, detail]) => (
-            <article className="activity-item" key={title}>
-              <span className="activity-icon" aria-hidden><Icon name={icon} /></span>
-              <span><strong>{title}</strong><small>{detail}</small></span>
-            </article>
-          ))}
-        </div>
-      </section>
-      <section className="activity-section activity-sources">
-        <div className="activity-heading"><h2>Топ джерела</h2><button type="button" onClick={onOpenSources} aria-label="Відкрити всі джерела"><Icon name="plus" /></button></div>
-        {sources.slice(0, 5).map((row, index) => (
-          <button type="button" className="activity-source" key={row.source} onClick={onOpenSources}>
-            <span className="activity-source-index">0{index + 1}</span>
-            <span><strong>{row.source}</strong><small>{row.wonCount} виграно</small></span>
-            <b>{short(row.won)} ₴</b>
-          </button>
-        ))}
-        {!sources.length ? <p className="empty">Немає джерел</p> : null}
-      </section>
-    </aside>
-  );
 }
 
 /* --------------------------------- Leads --------------------------------- */
