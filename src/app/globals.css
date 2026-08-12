@@ -330,34 +330,29 @@ svg { display: block; max-width: 100%; }
 .wide-filters {
   display: grid;
   width: calc(100% - 64px);
-  gap: 11px;
+  gap: 12px;
   margin: 0 32px 30px;
-  padding: 18px 19px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  background: var(--surface);
+  padding: 0 0 20px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
 }
-.wide-filters-head {
+.wide-filters-reset {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-  padding-bottom: 4px;
+  justify-content: flex-end;
+  min-height: 0;
+  margin-bottom: -2px;
 }
-.wide-filters-head > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
-.wide-filters-head strong { font-size: 12px; font-weight: 800; }
-.wide-filters-head span,
-.wide-filter-hint { color: var(--muted); font-size: 10px; }
-.wide-filters-head button {
+.wide-filters-reset button {
   flex: 0 0 auto;
-  padding: 4px 0;
+  padding: 2px 0;
   border: 0;
   color: var(--teal-deep);
   background: transparent;
   font-size: 10px;
   font-weight: 800;
 }
-.wide-filters-head button:hover { text-decoration: underline; }
+.wide-filters-reset button:hover { text-decoration: underline; }
 .filter-chip-row {
   display: grid;
   grid-template-columns: 134px minmax(0, 1fr);
@@ -806,9 +801,8 @@ tfoot td { border-top: 1px solid var(--line-strong); border-bottom: 0; color: va
   .workspace-heading h1 { font-size: 23px; }
   .workspace-heading p { max-width: 225px; line-height: 1.4; }
   .period-indicator { display: none; }
-  .wide-filters { width: calc(100% - 32px); gap: 12px; margin: 0 16px 24px; padding: 15px; border-radius: 14px; }
-  .wide-filters-head { align-items: start; }
-  .wide-filters-head > div { display: grid; gap: 4px; }
+  .wide-filters { width: calc(100% - 32px); gap: 12px; margin: 0 16px 24px; padding: 0 0 16px; }
+  .wide-filters-reset { margin-bottom: 0; }
   .filter-chip-row { grid-template-columns: 1fr; gap: 7px; }
   .filter-chip-track { overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
   .filter-chip-track::-webkit-scrollbar { display: none; }
