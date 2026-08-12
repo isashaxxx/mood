@@ -368,8 +368,8 @@ svg { display: block; max-width: 100%; }
 .topbar-user { display: grid; min-width: 0; gap: 2px; }
 .topbar-user strong { max-width: 145px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .topbar-user small { color: var(--muted); font-size: 11px; }
-.top-editor-toolbar { margin-left: 4px; }
-.top-editor-toolbar button { white-space: nowrap; }
+.topbar .top-editor-toolbar { min-height: 0; margin: 0 0 0 4px; }
+.topbar .top-editor-toolbar button { min-height: 38px; padding: 0 11px; white-space: nowrap; }
 .active-filter-bar {
   display: flex;
   align-items: center;
