@@ -1,29 +1,6 @@
-.page{
-  min-height:100vh;
-  display:grid;
-  place-items:center;
-  padding:24px;
-  background:linear-gradient(135deg,#e3f5ff 0%,#fff 52%,#e5ecf6 100%);
-}
-
-.card{
-  width:min(100%,400px);
-  padding:34px;
-  border:1px solid rgba(28,28,28,.1);
-  border-radius:24px;
-  background:rgba(255,255,255,.9);
-  box-shadow:0 18px 50px rgba(28,28,28,.08);
-}
-
-.brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;letter-spacing:-.04em}
-.brand i{width:28px;height:28px;border-radius:50%;background:#3bb9be}
-.eyebrow{margin:28px 0 4px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(28,28,28,.4)}
-.title{font-size:26px;line-height:1.2;letter-spacing:-.04em}
-.copy{margin-top:8px;color:rgba(28,28,28,.56);font-size:13px;line-height:20px}
-.form{display:grid;gap:16px;margin-top:26px}
-.form label{display:grid;gap:7px;font-size:12px;font-weight:700;color:rgba(28,28,28,.65)}
-.form input{width:100%;padding:11px 12px;border:1px solid rgba(28,28,28,.18);border-radius:10px;background:#fff;font:inherit;color:#1c1c1c}
-.form input:focus{outline:2px solid #95a4fc;outline-offset:1px;border-color:transparent}
-.form button{min-height:43px;border:0;border-radius:10px;background:#1c1c1c;color:#fff;font:700 13px/1 Manrope,system-ui,sans-serif;cursor:pointer}
-.form button:disabled{opacity:.55;cursor:progress}
-.error{padding:9px 11px;border-radius:9px;background:#ffdfe4;color:#8e2838;font-size:12px;line-height:17px}
+.page{min-height:100dvh;display:grid;place-items:center;padding:clamp(16px,3vw,44px);background:#e7e9e8}
+.card{width:min(100%,430px);padding:clamp(26px,4vw,42px);border:1px solid rgba(255,255,255,.9);border-radius:32px;background:#fff;box-shadow:0 24px 60px rgba(48,65,61,.13),0 2px 8px rgba(48,65,61,.04)}
+.brand{display:flex;align-items:center;gap:10px;color:#1c2221;font-size:20px;font-weight:800;letter-spacing:-.04em}.brand i{width:30px;height:30px;border-radius:50%;background:#3bb9be;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.eyebrow{margin:31px 0 5px;color:#78817f;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.title{color:#1c2221;font-size:28px;line-height:1.15;letter-spacing:-.045em}.copy{margin-top:9px;color:#78817f;font-size:13px;line-height:20px}
+.form{display:grid;gap:16px;margin-top:28px}.form label{display:grid;gap:7px;color:#56605e;font-size:12px;font-weight:800}.form input{width:100%;padding:11px 12px;border:1px solid #d6dfdc;border-radius:12px;background:#fdfefe;color:#1c2221;font:inherit;transition:border-color .18s ease,box-shadow .18s ease}.form input:focus{outline:0;border-color:#3bb9be;box-shadow:0 0 0 3px rgba(59,185,190,.2)}.form button{min-height:45px;border:0;border-radius:999px;background:#3bb9be;color:#fff;font:800 13px/1 Manrope,system-ui,sans-serif;cursor:pointer;box-shadow:0 5px 12px rgba(59,185,190,.22);transition:background .18s ease,transform .18s ease}.form button:hover:not(:disabled){background:#258f94}.form button:active{transform:translateY(1px)}.form button:disabled{opacity:.55;cursor:progress}.error{padding:10px 12px;border-radius:12px;background:#fbe2e5;color:#9c3e4a;font-size:12px;line-height:17px}
+@media(max-width:560px){.page{padding:16px}.card{border-radius:26px}}
