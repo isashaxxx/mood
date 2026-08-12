@@ -253,39 +253,23 @@ export default function Dashboard({ user }: { user: string }) {
 
   return (
     <div className="app">
-      <Sidebar view={view} setView={setView} />
+      <Sidebar view={view} setView={setView} user={user} onLogout={logout} />
       <main>
         <div className="crumbs">
           Аналітика <span>/</span> <b>{VIEWS.find(([v]) => v === view)?.[1]}</b>
           <div className="right">
-            <span className="profile"><img src="/moodua-logo.png" alt="MOODua" />{user}</span>
             <span title={sourceLabel}>Excel · оновлено {stamp}</span>
-            <button className="refresh" onClick={logout} disabled={loggingOut}>{loggingOut ? "Виходжу…" : "Вийти"}</button>
             <DashboardEditToolbar editor={editor} className="top-editor-toolbar" />
           </div>
         </div>
 
         <div className="filters">
-          <div className="fg">
-            <div className="fl">Період</div>
-            <div className="chips">
-              <button className="chip act" aria-pressed={selectedMonth === data.currentMonth}
-                onClick={(e) => { e.currentTarget.blur(); setSelectedMonth(data!.currentMonth); }}>
-                Поточний місяць
-              </button>
-              <button className="chip act" aria-pressed={selectedMonth === null}
-                onClick={(e) => { e.currentTarget.blur(); setSelectedMonth(null); }}>
-                За весь період
-              </button>
-            </div>
-          </div>
-          <Chips label="Місяць створення" items={allMonths} selected={selectedMonth} cls=""
-            render={label}
-            choose={setSelectedMonth} />
-          <Chips label="Джерело" items={allSources} selected={selectedSource} cls="s"
+          <FilterSelect label="Місяць створення" items={allMonths} selected={selectedMonth}
+            render={label} choose={setSelectedMonth} allLabel="Всі місяці" />
+          <FilterSelect label="Джерело" items={allSources} selected={selectedSource}
             choose={setSelectedSource} allLabel="Всі джерела" />
           {view === "ld" && (
-            <Chips label="Канал" items={allChannels} selected={selectedChannel} cls="c"
+            <FilterSelect label="Канал" items={allChannels} selected={selectedChannel}
               choose={setSelectedChannel} allLabel="Всі канали" />
           )}
         </div>
@@ -300,10 +284,14 @@ export default function Dashboard({ user }: { user: string }) {
   );
 }
 
-function Sidebar({ view, setView }: { view: View; setView: (v: View) => void }) {
+function Sidebar({ view, setView, user, onLogout }: { view: View; setView: (v: View) => void; user?: string; onLogout?: () => void }) {
   return (
     <aside className="sidebar">
-      <div className="logo"><b /> MOODua</div>
+      {user ? <div className="account">
+        <span className="avatar" aria-hidden>{user.slice(0, 1).toUpperCase()}</span>
+        <span className="account-copy"><b>{user}</b><small>Адміністратор</small></span>
+        {onLogout && <button className="logout" type="button" onClick={onLogout}>Вийти</button>}
+      </div> : <div className="logo"><b /> MOODua</div>}
       <div className="navlbl">Аналітика</div>
       <nav className="nav">
         {VIEWS.map(([v, name]) => (
@@ -322,24 +310,18 @@ function Sidebar({ view, setView }: { view: View; setView: (v: View) => void }) 
   );
 }
 
-function Chips({ label: title, items, selected, cls, choose, render, allLabel }: {
-  label: string; items: string[]; selected: string | null; cls: string;
-  choose: (v: string | null) => void; render?: (v: string) => string; allLabel?: string;
+function FilterSelect({ label: title, items, selected, choose, render, allLabel }: {
+  label: string; items: string[]; selected: string | null;
+  choose: (v: string | null) => void; render?: (v: string) => string; allLabel: string;
 }) {
   return (
-    <div className="fg">
-      <div className="fl">{title}</div>
-      <div className="chips">
-        {allLabel && <button className={`chip ${cls}`} aria-pressed={selected === null}
-          onClick={(e) => { e.currentTarget.blur(); choose(null); }}>{allLabel}</button>}
-        {items.map((v) => (
-          <button key={v} className={`chip ${cls}`} aria-pressed={selected === v}
-            onClick={(e) => { e.currentTarget.blur(); choose(v); }}>
-            {render ? render(v) : v}
-          </button>
-        ))}
-      </div>
-    </div>
+    <label className="filter-select">
+      <span className="fl">{title}</span>
+      <select value={selected ?? ""} onChange={(event) => choose(event.target.value || null)}>
+        <option value="">{allLabel}</option>
+        {items.map((value) => <option key={value} value={value}>{render ? render(value) : value}</option>)}
+      </select>
+    </label>
   );
 }
 
