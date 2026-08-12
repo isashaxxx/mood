@@ -694,18 +694,32 @@ function DashboardView({ deals, clients, leads, totals, months, periodLabel, onV
       id: "dashboard-kpis",
       title: "Ключові показники",
       children: (
-        <section className="snow-kpi-section" aria-label="Ключові показники">
-          <div className="snow-kpis">
-            <button type="button" className="snow-kpi snow-kpi-lilac" onClick={() => onViewChange("dl")}>
+        <section className="sales-summary-card snow-kpi-section" aria-label="Підсумок за період">
+          <div className="sales-summary-head">
+            <div>
+              <span className="sales-summary-eyebrow">Огляд продажів</span>
+              <h2>Підсумок за період</h2>
+              <p>{periodLabel}</p>
+            </div>
+            <button type="button" className="sales-summary-link" onClick={() => onViewChange("dl")}>
+              Усі угоди <Icon name="arrow" />
+            </button>
+          </div>
+          <div className="snow-kpis sales-kpis">
+            <button type="button" className="snow-kpi sales-kpi sales-kpi-revenue" onClick={() => onViewChange("dl")}>
+              <span className="sales-kpi-badge" aria-hidden>₴</span>
               <span>Виручка</span><strong>{short(totals.won)} ₴</strong><small>{totals.wonCount} виграних угод <i>↗</i></small>
             </button>
-            <button type="button" className="snow-kpi snow-kpi-blue" onClick={() => onViewChange("dl")}>
+            <button type="button" className="snow-kpi sales-kpi sales-kpi-pipeline" onClick={() => onViewChange("dl")}>
+              <span className="sales-kpi-badge" aria-hidden>↗</span>
               <span>Пайплайн</span><strong>{short(totals.pipeline)} ₴</strong><small>{totals.pipelineCount} відкритих угод <i>↗</i></small>
             </button>
-            <button type="button" className="snow-kpi snow-kpi-lilac" onClick={() => onViewChange("ld")}>
-              <span>Ліди</span><strong>{uah(leadTotal)}</strong><small>за {periodLabel} <i>↗</i></small>
+            <button type="button" className="snow-kpi sales-kpi sales-kpi-leads" onClick={() => onViewChange("ld")}>
+              <span className="sales-kpi-badge" aria-hidden>+</span>
+              <span>Нові ліди</span><strong>{uah(leadTotal)}</strong><small>за {periodLabel} <i>↗</i></small>
             </button>
-            <button type="button" className="snow-kpi snow-kpi-blue" onClick={() => onViewChange("sr")}>
+            <button type="button" className="snow-kpi sales-kpi sales-kpi-winrate" onClick={() => onViewChange("sr")}>
+              <span className="sales-kpi-badge" aria-hidden>%</span>
               <span>Win rate</span><strong>{winRate.toFixed(0)}%</strong><small>{totals.lostCount} програно <i>↗</i></small>
             </button>
           </div>
