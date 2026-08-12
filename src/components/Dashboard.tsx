@@ -493,13 +493,7 @@ function FilterChipBand({
   const hasFilters = selectedMonth !== currentMonth || Boolean(selectedSource || selectedChannel);
   return (
     <section className="wide-filters" aria-label="Фільтри аналітики">
-      <div className="wide-filters-head">
-        <div>
-          <strong>Фільтри</strong>
-          <span>Застосовуються до всіх показників на екрані</span>
-        </div>
-        {hasFilters ? <button type="button" onClick={reset}>Скинути</button> : <span className="wide-filter-hint">Оберіть зріз даних</span>}
-      </div>
+      {hasFilters ? <div className="wide-filters-reset"><button type="button" onClick={reset}>Скинути фільтри</button></div> : null}
       <FilterChipRow
         label="Період"
         items={[
