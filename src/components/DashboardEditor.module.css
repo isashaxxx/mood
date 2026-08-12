@@ -291,3 +291,152 @@
   .wideField { grid-column: auto; }
   .composer { padding: 15px; border-radius: 19px; }
 }
+
+
+/* Sales Dashboard editor controls — same visual language as the analytics surface. */
+.toolbar {
+  gap: var(--space-xs);
+  min-height: 40px;
+  margin-bottom: var(--space-md);
+}
+.editButton,
+.resetButton,
+.addButton,
+.expandButton,
+.removeButton,
+.toolButtons button {
+  min-height: 40px;
+  border-color: var(--line);
+  border-radius: var(--radius-control);
+  color: var(--ink);
+  background: var(--white);
+  box-shadow: none;
+  transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out);
+}
+.editButton {
+  border-color: var(--teal);
+  color: var(--accent-ink);
+  background: var(--teal);
+}
+.editButton:hover,
+.editButton[aria-pressed="true"] {
+  border-color: var(--teal-hover);
+  color: var(--accent-ink);
+  background: var(--teal-hover);
+}
+.resetButton:hover,
+.expandButton:hover,
+.toolButtons button:hover {
+  border-color: var(--accent-line);
+  color: var(--teal-deep);
+  background: var(--accent-pale);
+}
+.editButton:active,
+.resetButton:active,
+.addButton:active,
+.expandButton:active,
+.removeButton:active,
+.toolButtons button:active {
+  transform: translateY(1px);
+}
+.editButton:focus-visible,
+.resetButton:focus-visible,
+.addButton:focus-visible,
+.expandButton:focus-visible,
+.removeButton:focus-visible,
+.toolButtons button:focus-visible {
+  outline: 2px solid var(--teal-deep);
+  outline-offset: 2px;
+}
+.saved {
+  color: var(--teal-deep);
+}
+.editingBlock {
+  padding: var(--space-sm);
+  border-color: var(--accent-line);
+  border-radius: var(--radius-card);
+  background: var(--accent-pale);
+}
+.hiddenBlock {
+  border-color: var(--line-strong);
+  border-radius: var(--radius-card);
+  background: var(--soft);
+}
+.blockTools {
+  margin-bottom: var(--space-sm);
+}
+.blockLabel {
+  color: var(--teal-deep);
+}
+.toolButtons {
+  gap: var(--space-xs);
+}
+.toolButtons button {
+  width: 32px;
+  min-height: 32px;
+  border-radius: 9px;
+}
+.composer,
+.widgetCard {
+  border-color: var(--line);
+  border-radius: var(--radius-card);
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+}
+.composer {
+  padding: var(--space-xl);
+}
+.composerHeading h3 {
+  color: var(--ink);
+}
+.formGrid input,
+.formGrid select,
+.wideField input,
+.wideField select,
+.wideField textarea {
+  min-height: 40px;
+  border-color: var(--line);
+  border-radius: var(--radius-control);
+  color: var(--ink);
+  background: var(--soft);
+}
+.formGrid input:hover,
+.formGrid select:hover,
+.wideField input:hover,
+.wideField select:hover,
+.wideField textarea:hover {
+  background: var(--white);
+}
+.formGrid input:focus,
+.formGrid select:focus,
+.wideField input:focus,
+.wideField select:focus,
+.wideField textarea:focus {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-pale);
+}
+.addButton {
+  border-color: var(--teal);
+  color: var(--accent-ink);
+  background: var(--teal);
+}
+.addButton:hover {
+  border-color: var(--teal-hover);
+  color: var(--accent-ink);
+  background: var(--teal-hover);
+}
+.widgetCard {
+  padding: var(--space-lg);
+}
+.formulaValue {
+  color: var(--ink);
+}
+@media (max-width: 720px) {
+  .toolbar {
+    gap: var(--space-xs);
+  }
+  .composer {
+    padding: var(--space-md);
+    border-radius: var(--radius-card);
+  }
+}
