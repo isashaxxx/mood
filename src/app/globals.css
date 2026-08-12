@@ -330,7 +330,7 @@ svg { display: block; max-width: 100%; }
 
 .workspace-heading {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
   padding: 31px 32px 17px;
@@ -1538,9 +1538,7 @@ td {
     justify-content: center;
   }
   .logout::before {
-    content: "↪";
-    color: var(--red);
-    font-size: 18px;
+    content: none;
   }
   .topbar {
     padding-right: var(--space-lg);
