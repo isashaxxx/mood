@@ -46,7 +46,7 @@ body {
   overflow: hidden;
   color: var(--ink);
   background: var(--page);
-  font-family: var(--font-manrope), Manrope, "Helvetica Neue", Arial, sans-serif;
+  font-family: "Manrope", "Helvetica Neue", Arial, sans-serif;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
