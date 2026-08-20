@@ -22,38 +22,31 @@
             <div class="detail-preview" id="detailPreview" aria-hidden="true"><span></span></div>
             <div class="print-preview" id="printPreview" aria-hidden="true">MOOD</div>
           </div>
-          <div class="zoom-note">Відтінок на екрані може відрізнятися від тканини</div>
-        </div>
-        <div class="summary-bar">
-          <div class="summary-copy"><span>Ваша конфігурація</span><strong id="summaryText">Молочний / Футер / Вишивка</strong></div>
-          <div class="price"><span>від</span><strong id="price">3 890 ₴</strong></div>
         </div>
       </div>
 
       <aside class="controls" aria-label="Параметри худі">
         <header class="controls-header">
-          <div>
-            <span class="category" id="category">Худі</span>
-            <h1>Налаштуйте модель</h1>
+          <div class="title-copy">
+            <h1>Ваше худі</h1>
+            <p class="description" id="description">Оберіть основу, тканину й нанесення. Ми підготуємо прорахунок під ваш тираж.</p>
           </div>
           <button class="ghost-button reset-control" type="button" id="resetButton">Скинути</button>
         </header>
 
         <div class="controls-scroll">
-          <p class="description" id="description">Об’ємне худі з м’яким капюшоном і регульованим низом — готова основа для корпоративного мерчу.</p>
-
           <fieldset class="option-group">
-            <legend class="option-title"><span>Колір основи</span><output id="bodyColorName">Молочний</output></legend>
+            <legend class="option-title"><span>Колір</span><output id="bodyColorName">Молочний</output></legend>
             <div class="swatches" id="bodyColors"></div>
           </fieldset>
 
           <fieldset class="option-group">
-            <legend class="option-title"><span id="detailLabel">Шнурок і манжети</span><output id="detailColorName">Молочний</output></legend>
+            <legend class="option-title"><span id="detailLabel">Манжети та шнурки</span><output id="detailColorName">Молочний</output></legend>
             <div class="swatches" id="detailColors"></div>
           </fieldset>
 
           <fieldset class="option-group">
-            <legend class="option-title"><span>Матеріал</span><output id="materialName">Базовий футер</output></legend>
+            <legend class="option-title"><span>Тканина</span><output id="materialName">Базовий футер</output></legend>
             <div class="segmented" id="materials"></div>
           </fieldset>
 
@@ -63,13 +56,13 @@
           </fieldset>
 
           <details class="production-info">
-            <summary>Виробництво та деталі</summary>
+            <summary>Розміри й виробництво</summary>
             <p>Після заявки уточнимо розмір, посадку, кольори та спосіб нанесення. Термін виробництва: 7-12 робочих днів.</p>
           </details>
         </div>
 
         <footer class="order-panel">
-          <div class="order-copy"><strong>Готові до прорахунку?</strong><span>Менеджер уточнить тираж і розміри</span></div>
+          <div class="price"><strong id="price">3 890 ₴</strong><span>орієнтовна вартість</span></div>
           <button class="cta" id="orderButton" type="button"><span>Отримати прорахунок</span><span aria-hidden="true">→</span></button>
         </footer>
       </aside>

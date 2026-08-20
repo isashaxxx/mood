@@ -19,8 +19,8 @@ const palette = [
 
 const product = {
   category: 'Худі',
-  detail: 'Шнурок і манжети',
-  description: 'Об’ємне худі з м’яким капюшоном і регульованим низом — готова основа для корпоративного мерчу.',
+  detail: 'Манжети та шнурки',
+  description: 'Оберіть основу, тканину й нанесення. Ми підготуємо прорахунок під ваш тираж.',
   price: 3890,
   baseVariants: {
     0: 'assets/hoodie-milk.jpg',
@@ -157,7 +157,7 @@ function update() {
     if (image.complete) requestAnimationFrame(() => visual.classList.remove('changing'));
   }
   image.alt = `${product.category} MOODua: ${body.name}, ${accent.name}, ${material.name}, ${print.name}`;
-  $('#category').textContent = product.category;
+  if ($('#category')) $('#category').textContent = product.category;
   $('#description').textContent = product.description;
   $('#detailLabel').textContent = product.detail;
   $('#bodyColorName').textContent = body.name;
@@ -165,7 +165,7 @@ function update() {
   $('#materialName').textContent = material.name;
   $('#printName').textContent = print.name;
   $('#printPreview').className = 'print-preview';
-  $('#summaryText').textContent = `${body.name} / ${material.short} / ${print.short}`;
+  if ($('#summaryText')) $('#summaryText').textContent = `${body.name} / ${material.short} / ${print.short}`;
   $('#price').textContent = formatPrice(product.price + material.add + print.add);
 
   renderSwatches('#bodyColors', state.body, 'body');
