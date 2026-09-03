@@ -88,7 +88,9 @@ function measureCatalogLoop() {
   catalogCycleWidth = originalCatalogCards.reduce((width, card) => width + card.offsetWidth + 16, 0);
   const untouched = catalogAutoScrollLeft === null || Math.abs(catalogTrack.scrollLeft - catalogAutoScrollLeft) < 1;
   if (untouched && catalogCycleWidth) {
-    originalCatalogCards[0].scrollIntoView({ inline: 'start', block: 'nearest' });
+    const scrollPaddingLeft = parseFloat(getComputedStyle(catalogTrack).scrollPaddingLeft) || 0;
+    const target = originalCatalogCards[0].getBoundingClientRect().left - catalogTrack.getBoundingClientRect().left + catalogTrack.scrollLeft - scrollPaddingLeft;
+    catalogTrack.scrollLeft = target;
     catalogAutoScrollLeft = catalogTrack.scrollLeft;
   }
 }
