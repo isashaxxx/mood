@@ -129,6 +129,8 @@ const selectionCount = root.querySelector('#selection-count');
 const startButton = root.querySelector('#start-config');
 const pickerPanel = root.querySelector('#builder-picker');
 const editorPanel = root.querySelector('#builder-editor');
+const progressEditorBtn = root.querySelector('#progress-editor');
+const progressSummaryBtn = root.querySelector('#progress-summary');
 let items = [];
 let activeId = null;
 
@@ -146,6 +148,8 @@ function syncSelectionUI() {
   const count = items.length;
   selectionCount.textContent = count ? `Обрано: ${count}` : 'Нічого не обрано';
   startButton.disabled = count === 0;
+  progressEditorBtn.disabled = count === 0;
+  progressSummaryBtn.disabled = count === 0;
 }
 
 function addProductToCollection(productId) {
