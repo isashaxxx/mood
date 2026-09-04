@@ -1614,6 +1614,9 @@ dialog pre {
   .section {
     padding: 60px 16px;
   }
+  .mood-root {
+    background: transparent;
+  }
   .hero {
     padding: 24px 16px 40px;
     background: transparent;
