@@ -541,8 +541,8 @@ h1 em, h2 em, h3 em, dialog h2 em {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #ffffff;
-  border: 1px solid var(--line);
+  background: var(--mist);
+  border: 1px solid transparent;
   color: var(--ink);
   display: inline-flex;
   align-items: center;
@@ -682,22 +682,21 @@ h1 em, h2 em, h3 em, dialog h2 em {
   border-radius: var(--radius-full);
   font-size: 11.5px;
   font-weight: 700;
-  background: var(--ink);
+  background: #3bb9be;
   color: #ffffff;
   border: 1px solid transparent;
-  transition: background-color 0.35s var(--ease), color 0.35s var(--ease), transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
+  transition: background-color 0.35s var(--ease), color 0.35s var(--ease), transform 0.35s var(--ease);
   cursor: pointer;
 }
 
 .catalog-select:hover {
-  background: var(--aqua);
+  background: var(--ink);
   color: #ffffff;
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(46, 180, 185, 0.35);
 }
 
 .catalog-select.selected {
-  background: var(--aqua);
+  background: var(--ink);
   color: #ffffff;
   transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
 }
@@ -782,7 +781,6 @@ h1 em, h2 em, h3 em, dialog h2 em {
 .builder-progress button.active {
   background: #3bb9be;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(59, 185, 190, 0.3);
 }
 
 .builder-progress button.active:hover {
@@ -829,17 +827,16 @@ h1 em, h2 em, h3 em, dialog h2 em {
   padding: 14px;
   background: #ffffff;
   border: 1px solid var(--line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   cursor: pointer;
   text-align: left;
-  transition: all 0.25s var(--ease);
-  box-shadow: var(--shadow-sm);
+  transition: border-color 0.3s var(--ease), transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
 }
 
 .picker-card:hover {
-  border-color: var(--aqua);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  border-color: #3bb9be;
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px -12px rgba(59, 185, 190, 0.28);
 }
 
 .picker-card.selected {
@@ -1163,7 +1160,6 @@ h1 em, h2 em, h3 em, dialog h2 em {
   background: #3bb9be;
   border-color: #3bb9be;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(59, 185, 190, 0.3);
 }
 
 .color-options .option {
@@ -1182,7 +1178,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .color-options .option.active {
-  box-shadow: 0 0 0 2.5px #3bb9be, 0 4px 12px rgba(59, 185, 190, 0.3);
+  box-shadow: 0 0 0 2.5px #3bb9be;
   transform: scale(1.1);
 }
 
@@ -1247,7 +1243,6 @@ h1 em, h2 em, h3 em, dialog h2 em {
 
 #next-item {
   background: #3bb9be;
-  box-shadow: 0 4px 16px rgba(59, 185, 190, 0.3);
 }
 
 #next-item:hover {
@@ -1338,7 +1333,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .faq-list {
-  max-width: 860px;
+  max-width: 100%;
   border-top: 1px solid var(--line);
 }
 
