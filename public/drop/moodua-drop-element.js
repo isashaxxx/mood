@@ -1,7 +1,7 @@
 (function () {
   const scriptUrl = document.currentScript?.src || document.baseURI;
   const defaultBase = new URL('.', scriptUrl).href;
-  const buildVersion = '20260904-1900';
+  const buildVersion = '20260904-2100';
   const versionedUrl = (path, base) => {
     const url = new URL(path, base);
     url.searchParams.set('v', buildVersion);
@@ -29,8 +29,11 @@
 
       const seoCopy = {
         uk: {
-          h1: 'Make It Your MOOD — Drop Collection',
-          intro: 'Колекція, що показує, яким може бути мерч вашої компанії. Оберіть вироби, налаштуйте колір, матеріал і брендування — отримайте готову структуру дропу.',
+          h1: 'Готова колекція мерчу, яку можна зробити своєю.',
+          eyebrow: 'ЩО ЦЕ',
+          intro: 'Ми спроєктували базові речі — футболки, худі, поло — і зібрали їх у Drop Collection. Обираєте вироби, налаштовуєте колір, матеріал і брендування під свою компанію — і отримуєте готову структуру дропу без розробки з нуля.',
+          stats: [['6', 'базових виробів'], ['4+', 'кольори на кожен'], ['20 шт.', 'мінімальний тираж']],
+          cta: 'Створити свою колекцію',
           schemaDescription: 'Корпоративний мерч і подарунки з логотипом під ключ: дизайн, брендування, виробництво та доставка.',
           sections: [
             { h2: 'Що таке MOODua Drop Collection?', p: 'Це готова колекція базового мерчу — футболки, худі, поло, лонгсліви — яку можна кастомізувати під бренд вашої компанії: колір, матеріал, принт і брендування.' },
@@ -55,8 +58,11 @@
           ]
         },
         ru: {
-          h1: 'Make It Your MOOD — Drop Collection',
-          intro: 'Коллекция, которая показывает, каким может быть мерч вашей компании. Выберите изделия, настройте цвет, материал и брендирование — получите готовую структуру дропа.',
+          h1: 'Готовая коллекция мерча, которую можно сделать своей.',
+          eyebrow: 'ЧТО ЭТО',
+          intro: 'Мы спроектировали базовые вещи — футболки, худи, поло — и собрали их в Drop Collection. Выбираете изделия, настраиваете цвет, материал и брендирование под свою компанию — и получаете готовую структуру дропа без разработки с нуля.',
+          stats: [['6', 'базовых изделий'], ['4+', 'цвета на каждое'], ['20 шт.', 'минимальный тираж']],
+          cta: 'Создать свою коллекцию',
           schemaDescription: 'Корпоративный мерч и подарки с логотипом под ключ: дизайн, брендирование, производство и доставка.',
           sections: [
             { h2: 'Что такое MOODua Drop Collection?', p: 'Это готовая коллекция базового мерча — футболки, худи, поло, лонгсливы — которую можно кастомизировать под бренд вашей компании: цвет, материал, принт и брендирование.' },
@@ -81,8 +87,11 @@
           ]
         },
         en: {
-          h1: 'Make It Your MOOD — Drop Collection',
-          intro: 'A collection that shows what your company’s merch could look like. Choose products, customize color, material and branding — get a ready-made drop structure.',
+          h1: 'A ready-made merch collection you can make your own.',
+          eyebrow: 'WHAT IS THIS',
+          intro: 'We designed core pieces — t-shirts, hoodies, polos — and put them together in a Drop Collection. Choose products, set the color, material and branding for your company, and get a ready-made drop structure without building from scratch.',
+          stats: [['6', 'core products'], ['4+', 'colors each'], ['20 pcs', 'minimum run']],
+          cta: 'Build your collection',
           schemaDescription: 'Corporate merch and branded gifts, done for you: design, branding, production and delivery.',
           sections: [
             { h2: 'What is MOODua Drop Collection?', p: 'A ready-made collection of core merch — t-shirts, hoodies, polos, longsleeves — that you can customize for your brand: color, material, print and branding.' },
@@ -110,14 +119,61 @@
       const pageLang = (document.documentElement.lang || 'uk').slice(0, 2).toLowerCase();
       const seo = seoCopy[pageLang] || seoCopy.uk;
 
-      if (!this.querySelector('h1')) {
-        const frag = document.createDocumentFragment();
+      if (!document.getElementById('moodua-seo-intro-styles')) {
+        const introStyles = document.createElement('style');
+        introStyles.id = 'moodua-seo-intro-styles';
+        introStyles.textContent = `
+          .moodua-seo-intro{font-family:'Manrope',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:1320px;margin:0 auto;padding:clamp(56px,7vw,96px) clamp(20px,5vw,64px);display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,0.8fr);gap:clamp(28px,4vw,56px);align-items:center;color:#324158;box-sizing:border-box}
+          .moodua-seo-intro *{box-sizing:border-box}
+          .moodua-seo-intro-eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:#f0f2f5;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#324158;width:max-content;margin:0 0 16px}
+          .moodua-seo-intro h1{font-size:clamp(28px,3.6vw,46px);line-height:1.05;letter-spacing:-.03em;margin:0 0 16px;font-weight:700}
+          .moodua-seo-intro-copy p{font-size:15px;line-height:1.6;color:#5e6d82;margin:0 0 20px;max-width:560px}
+          .moodua-seo-intro-cta{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:999px;background:#324158;color:#fff;font-weight:700;font-size:14px;text-decoration:none}
+          .moodua-seo-intro-stats{display:grid;gap:12px}
+          .moodua-seo-intro-stat{display:flex;align-items:baseline;gap:10px;padding:16px 20px;border:1px solid #e3e7ec;border-radius:14px;background:#f0f2f5}
+          .moodua-seo-intro-stat strong{font-size:clamp(20px,2.2vw,26px);font-weight:800;letter-spacing:-.02em;color:#324158;white-space:nowrap}
+          .moodua-seo-intro-stat span{font-size:12.5px;color:#5e6d82}
+          @media (max-width:760px){.moodua-seo-intro{grid-template-columns:1fr}}
+        `;
+        document.head.append(introStyles);
+      }
+
+      if (!this.querySelector('.moodua-seo-intro')) {
+        const introWrap = document.createElement('div');
+        introWrap.className = 'moodua-seo-intro';
+        introWrap.setAttribute('slot', 'moodua-seo-intro');
+        const copyCol = document.createElement('div');
+        copyCol.className = 'moodua-seo-intro-copy';
+        const eyebrow = document.createElement('p');
+        eyebrow.className = 'moodua-seo-intro-eyebrow';
+        eyebrow.textContent = seo.eyebrow;
         const seoH1 = document.createElement('h1');
         seoH1.textContent = seo.h1;
-        frag.append(seoH1);
         const seoIntro = document.createElement('p');
         seoIntro.textContent = seo.intro;
-        frag.append(seoIntro);
+        const cta = document.createElement('a');
+        cta.className = 'moodua-seo-intro-cta';
+        cta.href = '#builder';
+        cta.textContent = seo.cta;
+        copyCol.append(eyebrow, seoH1, seoIntro, cta);
+        const statsCol = document.createElement('div');
+        statsCol.className = 'moodua-seo-intro-stats';
+        seo.stats.forEach(([num, label]) => {
+          const stat = document.createElement('div');
+          stat.className = 'moodua-seo-intro-stat';
+          const strong = document.createElement('strong');
+          strong.textContent = num;
+          const span = document.createElement('span');
+          span.textContent = label;
+          stat.append(strong, span);
+          statsCol.append(stat);
+        });
+        introWrap.append(copyCol, statsCol);
+        this.append(introWrap);
+      }
+
+      if (!this.querySelector('h2')) {
+        const frag = document.createDocumentFragment();
         seo.sections.forEach((section) => {
           const h2 = document.createElement('h2');
           h2.textContent = section.h2;
@@ -203,6 +259,13 @@
           const src = image.getAttribute('src');
           if (src) image.setAttribute('src', new URL(src, assetBase).href);
         });
+
+        const heroSection = main.querySelector('.hero');
+        if (heroSection) {
+          const seoSlot = source.createElement('slot');
+          seoSlot.setAttribute('name', 'moodua-seo-intro');
+          heroSection.insertAdjacentElement('afterend', seoSlot);
+        }
 
         const css = rawCss
           .replace(':root{', ':host{')
