@@ -116,6 +116,9 @@ root.querySelector('#catalog-next').addEventListener('click', () => scrollCatalo
 root.querySelector('#catalog-prev').addEventListener('click', () => scrollCatalog(-1));
 ['pointerenter','focusin'].forEach((type) => catalogTrack.addEventListener(type, () => { catalogPaused = true; }));
 ['pointerleave','focusout'].forEach((type) => catalogTrack.addEventListener(type, () => { catalogPaused = false; }));
+let catalogTouchResume;
+catalogTrack.addEventListener('touchstart', () => { catalogPaused = true; window.clearTimeout(catalogTouchResume); }, { passive: true });
+catalogTrack.addEventListener('touchend', () => { catalogTouchResume = window.setTimeout(() => { catalogPaused = false; }, 1500); }, { passive: true });
 let catalogTimer;
 const catalogObserver = new IntersectionObserver(([entry]) => { catalogVisible = entry.isIntersecting; }, { threshold: .2 });
 catalogObserver.observe(catalogTrack);
