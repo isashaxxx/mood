@@ -1,12 +1,19 @@
 (function () {
   const scriptUrl = document.currentScript?.src || document.baseURI;
   const defaultBase = new URL('.', scriptUrl).href;
-  const buildVersion = '20260903-2600';
+  const buildVersion = '20260904-1200';
   const versionedUrl = (path, base) => {
     const url = new URL(path, base);
     url.searchParams.set('v', buildVersion);
     return url.href;
   };
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+    document.head.append(script);
+  });
 
   class MooduaDropCollection extends HTMLElement {
     constructor() {
@@ -34,8 +41,8 @@
       }
 
       try {
-        await import(versionedUrl('moodua-drop-data.js', assetBase));
-        await import(versionedUrl('moodua-drop.js', assetBase));
+        await loadScript(versionedUrl('moodua-drop-data.js', assetBase));
+        await loadScript(versionedUrl('moodua-drop.js', assetBase));
         const [htmlResponse, cssResponse] = await Promise.all([
           fetch(versionedUrl('moodua-drop.html', assetBase), { cache: 'no-store' }),
           fetch(versionedUrl('moodua-drop.css', assetBase), { cache: 'no-store' })
