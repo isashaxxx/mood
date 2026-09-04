@@ -1,7 +1,7 @@
 (function () {
   const scriptUrl = document.currentScript?.src || document.baseURI;
   const defaultBase = new URL('.', scriptUrl).href;
-  const buildVersion = '20260904-1745';
+  const buildVersion = '20260904-1800';
   const versionedUrl = (path, base) => {
     const url = new URL(path, base);
     url.searchParams.set('v', buildVersion);
@@ -27,11 +27,31 @@
       const assetBase = new URL(this.getAttribute('asset-base') || '.', defaultBase).href;
       this.setAttribute('asset-base', assetBase);
 
+      const seoCopy = {
+        uk: {
+          h1: 'Make It Your MOOD — Drop Collection',
+          p: 'Колекція, що показує, яким може бути мерч вашої компанії. Оберіть вироби, налаштуйте колір, матеріал і брендування — отримайте готову структуру дропу.',
+          schemaDescription: 'Корпоративний мерч і подарунки з логотипом під ключ: дизайн, брендування, виробництво та доставка.'
+        },
+        ru: {
+          h1: 'Make It Your MOOD — Drop Collection',
+          p: 'Коллекция, которая показывает, каким может быть мерч вашей компании. Выберите изделия, настройте цвет, материал и брендирование — получите готовую структуру дропа.',
+          schemaDescription: 'Корпоративный мерч и подарки с логотипом под ключ: дизайн, брендирование, производство и доставка.'
+        },
+        en: {
+          h1: 'Make It Your MOOD — Drop Collection',
+          p: 'A collection that shows what your company’s merch could look like. Choose products, customize color, material and branding — get a ready-made drop structure.',
+          schemaDescription: 'Corporate merch and branded gifts, done for you: design, branding, production and delivery.'
+        }
+      };
+      const pageLang = (document.documentElement.lang || 'uk').slice(0, 2).toLowerCase();
+      const seo = seoCopy[pageLang] || seoCopy.uk;
+
       if (!this.querySelector('h1')) {
         const seoH1 = document.createElement('h1');
-        seoH1.textContent = 'Make It Your MOOD — Drop Collection';
+        seoH1.textContent = seo.h1;
         const seoP = document.createElement('p');
-        seoP.textContent = 'Колекція, що показує, яким може бути мерч вашої компанії. Оберіть вироби, налаштуйте колір, матеріал і брендування — отримайте готову структуру дропу.';
+        seoP.textContent = seo.p;
         this.prepend(seoP);
         this.prepend(seoH1);
       }
@@ -45,7 +65,7 @@
           '@type': 'Organization',
           name: 'MOODua',
           url: 'https://www.moodua.com',
-          description: 'Корпоративний мерч і подарунки з логотипом під ключ: дизайн, брендування, виробництво та доставка.'
+          description: seo.schemaDescription
         });
         document.head.append(schema);
       }
