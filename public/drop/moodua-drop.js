@@ -384,6 +384,26 @@ root.querySelectorAll('a[href^="#"]').forEach((link) => link.addEventListener('c
   if (target && root !== document) { event.preventDefault(); target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' }); }
 }));
 
+root.querySelectorAll('.faq-item').forEach((details) => {
+  const summary = details.querySelector('summary');
+  const body = details.querySelector('.faq-body');
+  let animation = null;
+  summary.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (reducedMotion) { details.open = !details.open; return; }
+    animation?.cancel();
+    const isOpen = details.open;
+    if (isOpen) {
+      animation = body.animate([{ height: `${body.offsetHeight}px` }, { height: '0px' }], { duration: 240, easing: 'cubic-bezier(.16,1,.3,1)' });
+      animation.onfinish = () => { details.open = false; };
+    } else {
+      details.open = true;
+      const targetHeight = body.offsetHeight;
+      animation = body.animate([{ height: '0px' }, { height: `${targetHeight}px` }], { duration: 260, easing: 'cubic-bezier(.16,1,.3,1)' });
+    }
+  });
+});
+
 return () => { window.clearInterval(storyTimer); window.clearInterval(catalogTimer); window.clearTimeout(catalogNormalizeTimer); window.removeEventListener('resize', measureCatalogLoop); catalogObserver.disconnect(); revealObserver.disconnect(); };
 
 }

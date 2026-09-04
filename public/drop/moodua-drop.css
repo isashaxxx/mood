@@ -588,7 +588,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border: 1px solid rgba(18, 30, 49, 0.06);
+  border: none;
   box-shadow: var(--shadow-md);
   transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
 }
@@ -828,7 +828,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
   gap: 16px;
   padding: 14px;
   background: #ffffff;
-  border: 1.5px solid var(--line);
+  border: 1px solid var(--line);
   border-radius: var(--radius-md);
   cursor: pointer;
   text-align: left;
@@ -1332,9 +1332,89 @@ h1 em, h2 em, h3 em, dialog h2 em {
   background: var(--mist);
 }
 
+/* FAQ Section */
+.faq {
+  background: #ffffff;
+}
+
+.faq-list {
+  max-width: 860px;
+  border-top: 1px solid var(--line);
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--line);
+}
+
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 26px 2px;
+  font-size: clamp(16px, 1.7vw, 19px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-icon {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.faq-icon::before,
+.faq-icon::after {
+  content: '';
+  position: absolute;
+  background: var(--ink);
+  transition: transform 0.3s var(--ease), opacity 0.3s var(--ease);
+}
+
+.faq-icon::before {
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  transform: translateY(-50%);
+}
+
+.faq-icon::after {
+  left: 50%;
+  top: 0;
+  height: 100%;
+  width: 1.5px;
+  transform: translateX(-50%);
+}
+
+.faq-item[open] .faq-icon::after {
+  transform: translateX(-50%) rotate(90deg);
+  opacity: 0;
+}
+
+.faq-body {
+  overflow: hidden;
+}
+
+.faq-body p {
+  padding: 0 2px clamp(24px, 3vw, 32px);
+  max-width: 640px;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
 /* Closing Section */
 .closing {
-  background: #3bb9be;
+  background: linear-gradient(135deg, #2fa5aa 0%, #3bb9be 45%, #5cd3cc 100%);
   color: #ffffff;
   padding: clamp(80px, 9vw, 140px) clamp(20px, 5vw, 84px);
   position: relative;
@@ -1347,15 +1427,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .closing .eyebrow {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 16px;
-  border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: #ffffff;
+  color: rgba(255, 255, 255, 0.85);
   letter-spacing: 0.16em;
 }
 
