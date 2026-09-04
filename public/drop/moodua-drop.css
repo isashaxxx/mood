@@ -1616,8 +1616,12 @@ dialog pre {
   }
   .hero {
     padding: 24px 16px 40px;
+    background: transparent;
   }
   .hero-photo {
+    display: none;
+  }
+  .hero-shade {
     display: none;
   }
   .hero-copy h1 {
