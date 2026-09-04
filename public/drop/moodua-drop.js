@@ -137,7 +137,7 @@ function syncSelectionUI() {
     const isInCollection = hasItem(card.dataset.product);
     const button = card.querySelector('.catalog-select');
     button.classList.toggle('selected', isInCollection);
-    button.textContent = isInCollection ? 'Обрано' : 'Обрати';
+    button.innerHTML = isInCollection ? `${materialIcon('check')}Обрано` : 'Обрати';
     button.setAttribute('aria-pressed', String(isInCollection));
   });
   const count = items.length;
