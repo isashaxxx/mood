@@ -547,8 +547,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s var(--ease);
+  transition: background-color 0.3s var(--ease), border-color 0.3s var(--ease), transform 0.3s var(--ease);
 }
 
 .catalog-actions button:hover {
@@ -653,9 +652,9 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .product-card h3 {
-  font-size: 20px;
+  font-size: clamp(16px, 1.9vw, 20px);
   font-weight: 700;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.03em;
 }
 
 .product-card p {
@@ -781,14 +780,14 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .builder-progress button.active {
-  background: var(--ink);
+  background: #3bb9be;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(18, 30, 49, 0.12);
+  box-shadow: 0 4px 12px rgba(59, 185, 190, 0.3);
 }
 
 .builder-progress button.active:hover {
   color: #ffffff;
-  background: var(--ink);
+  background: #3bb9be;
 }
 
 /* Picker Panel */
@@ -844,9 +843,9 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .picker-card.selected {
-  border-color: var(--ink);
-  background: #f4f9f9;
-  box-shadow: 0 0 0 1px var(--ink);
+  border-color: #3bb9be;
+  background: #f2fafa;
+  box-shadow: 0 0 0 1px #3bb9be;
 }
 
 .picker-card img {
@@ -895,8 +894,8 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .picker-card.selected .picker-check {
-  background: var(--ink);
-  border-color: var(--ink);
+  background: #3bb9be;
+  border-color: #3bb9be;
 }
 
 .picker-card.selected .picker-check .material-icon {
@@ -1000,8 +999,8 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .editor-tab.active {
-  background: var(--ink);
-  color: rgba(255, 255, 255, 0.7);
+  background: #3bb9be;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .editor-tab.active b {
@@ -1161,24 +1160,29 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .option.active {
-  background: var(--ink);
-  border-color: var(--ink);
+  background: #3bb9be;
+  border-color: #3bb9be;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(18, 30, 49, 0.14);
+  box-shadow: 0 4px 12px rgba(59, 185, 190, 0.3);
 }
 
 .color-options .option {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   border-radius: 50%;
   background: var(--color);
-  border: 3.5px solid #ffffff;
-  box-shadow: 0 0 0 1px var(--line), 0 2px 6px rgba(18, 30, 49, 0.08);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(18, 30, 49, 0.1);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+
+.color-options .option:hover {
+  transform: scale(1.08);
 }
 
 .color-options .option.active {
-  box-shadow: 0 0 0 2.5px var(--ink), 0 4px 12px rgba(18, 30, 49, 0.2);
+  box-shadow: 0 0 0 2.5px #3bb9be, 0 4px 12px rgba(59, 185, 190, 0.3);
   transform: scale(1.1);
 }
 
@@ -1239,6 +1243,15 @@ h1 em, h2 em, h3 em, dialog h2 em {
 .full {
   width: 100%;
   margin-top: 20px;
+}
+
+#next-item {
+  background: #3bb9be;
+  box-shadow: 0 4px 16px rgba(59, 185, 190, 0.3);
+}
+
+#next-item:hover {
+  background: #329fa3;
 }
 
 /* Collection Summary Step */
@@ -1334,8 +1347,15 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .closing .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: #ffffff;
-  opacity: 0.8;
   letter-spacing: 0.16em;
 }
 
