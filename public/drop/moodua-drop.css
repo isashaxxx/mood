@@ -91,14 +91,13 @@ img {
   gap: 8px;
   width: max-content;
   padding: 6px 14px;
-  border: 1px solid rgba(18, 30, 49, 0.12);
+  border: 1px solid transparent;
   border-radius: var(--radius-full);
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
+  background: var(--mist);
 }
 
 h1, h2, h3, h4 {
@@ -243,6 +242,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
   align-items: flex-start;
   gap: 20px;
   max-width: 540px;
+  padding-bottom: clamp(24px, 4vw, 56px);
 }
 
 .hero-copy .eyebrow {
@@ -284,11 +284,6 @@ h1 em, h2 em, h3 em, dialog h2 em {
   object-fit: cover;
   object-position: center;
   z-index: 1;
-  transition: transform 0.6s var(--ease);
-}
-
-.hero:hover .hero-photo {
-  transform: scale(1.015);
 }
 
 .hero-shade {
@@ -1320,8 +1315,8 @@ h1 em, h2 em, h3 em, dialog h2 em {
 
 /* Closing Section */
 .closing {
-  background: var(--deep);
-  color: #ffffff;
+  background: #00ccc0;
+  color: var(--ink);
   padding: clamp(80px, 9vw, 140px) clamp(20px, 5vw, 84px);
   position: relative;
   overflow: hidden;
@@ -1333,7 +1328,8 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .closing .eyebrow {
-  color: var(--aqua);
+  color: var(--ink);
+  opacity: 0.65;
   letter-spacing: 0.16em;
 }
 
@@ -1341,12 +1337,12 @@ h1 em, h2 em, h3 em, dialog h2 em {
   font-size: clamp(48px, 6.5vw, 96px);
   line-height: 0.94;
   letter-spacing: -0.04em;
-  color: #ffffff;
+  color: var(--ink);
   max-width: 860px;
 }
 
 .closing h2 em {
-  color: var(--aqua);
+  color: var(--ink);
 }
 
 .closing .button {
