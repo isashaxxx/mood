@@ -1,7 +1,7 @@
 (function () {
   const scriptUrl = document.currentScript?.src || document.baseURI;
   const defaultBase = new URL('.', scriptUrl).href;
-  const buildVersion = '20260904-1715';
+  const buildVersion = '20260904-1745';
   const versionedUrl = (path, base) => {
     const url = new URL(path, base);
     url.searchParams.set('v', buildVersion);
@@ -26,6 +26,29 @@
       if (this.shadowRoot?.childElementCount) return;
       const assetBase = new URL(this.getAttribute('asset-base') || '.', defaultBase).href;
       this.setAttribute('asset-base', assetBase);
+
+      if (!this.querySelector('h1')) {
+        const seoH1 = document.createElement('h1');
+        seoH1.textContent = 'Make It Your MOOD — Drop Collection';
+        const seoP = document.createElement('p');
+        seoP.textContent = 'Колекція, що показує, яким може бути мерч вашої компанії. Оберіть вироби, налаштуйте колір, матеріал і брендування — отримайте готову структуру дропу.';
+        this.prepend(seoP);
+        this.prepend(seoH1);
+      }
+
+      if (!document.getElementById('moodua-drop-schema')) {
+        const schema = document.createElement('script');
+        schema.type = 'application/ld+json';
+        schema.id = 'moodua-drop-schema';
+        schema.textContent = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: 'MOODua',
+          url: 'https://www.moodua.com',
+          description: 'Корпоративний мерч і подарунки з логотипом під ключ: дизайн, брендування, виробництво та доставка.'
+        });
+        document.head.append(schema);
+      }
 
       if (!document.getElementById('moodua-drop-fonts')) {
         const fonts = document.createElement('style');
