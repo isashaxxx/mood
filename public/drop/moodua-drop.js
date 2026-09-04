@@ -1,6 +1,7 @@
 function initMoodDrop(root = document) {
 const { PRODUCTS, createItem, updateItem, duplicateItem, removeItem, summarizeCollection } = window.MoodDropData;
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isMobileView = window.matchMedia('(max-width: 640px)').matches;
 const assetPath = (path) => root === document ? path : new URL(path, root.host.getAttribute('asset-base') || document.baseURI).href;
 const materialIcon = (name) => `<img class="material-icon" src="${assetPath(`assets/drop/icons/${name}.svg`)}" alt="">`;
 
@@ -52,7 +53,7 @@ storySlides.forEach((slide, index) => {
   storyEls.switcher.append(button);
 });
 renderStory(0);
-if (!reducedMotion) storyTimer = window.setInterval(() => renderStory((storyIndex + 1) % storySlides.length), 4500);
+if (!reducedMotion && !isMobileView) storyTimer = window.setInterval(() => renderStory((storyIndex + 1) % storySlides.length), 4500);
 
 const catalogTrack = root.querySelector('#catalog-track');
 let catalogPaused = false;
@@ -122,7 +123,7 @@ catalogTrack.addEventListener('touchend', () => { catalogTouchResume = window.se
 let catalogTimer;
 const catalogObserver = new IntersectionObserver(([entry]) => { catalogVisible = entry.isIntersecting; }, { threshold: .2 });
 catalogObserver.observe(catalogTrack);
-if (!reducedMotion) catalogTimer = window.setInterval(() => { if (!catalogPaused && catalogVisible) scrollCatalog(1); }, 4200);
+if (!reducedMotion && !isMobileView) catalogTimer = window.setInterval(() => { if (!catalogPaused && catalogVisible) scrollCatalog(1); }, 4200);
 
 const picker = root.querySelector('#product-picker');
 const selectionCount = root.querySelector('#selection-count');

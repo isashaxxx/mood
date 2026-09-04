@@ -1700,16 +1700,30 @@ dialog pre {
     letter-spacing: 0.02em;
   }
   .product-picker {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
   .picker-card {
-    grid-template-columns: 72px 1fr 24px;
-    gap: 12px;
-    padding: 10px;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 10px;
+    padding: 16px 10px;
+    position: relative;
   }
   .picker-card img {
-    width: 72px;
-    height: 72px;
+    width: 64px;
+    height: 64px;
+  }
+  .picker-card-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .picker-check {
+    position: absolute;
+    top: 10px;
+    right: 10px;
   }
   .picker-footer {
     flex-direction: column;
