@@ -1,7 +1,7 @@
 (function () {
   const scriptUrl = document.currentScript?.src || document.baseURI;
   const defaultBase = new URL('.', scriptUrl).href;
-  const buildVersion = '20260904-1830';
+  const buildVersion = '20260904-1900';
   const versionedUrl = (path, base) => {
     const url = new URL(path, base);
     url.searchParams.set('v', buildVersion);
@@ -185,9 +185,9 @@
       }
 
       try {
-        await loadScript(versionedUrl('moodua-drop-data.js', assetBase));
-        await loadScript(versionedUrl('moodua-drop.js', assetBase));
-        const [htmlResponse, cssResponse] = await Promise.all([
+        const [, , htmlResponse, cssResponse] = await Promise.all([
+          loadScript(versionedUrl('moodua-drop-data.js', assetBase)),
+          loadScript(versionedUrl('moodua-drop.js', assetBase)),
           fetch(versionedUrl('moodua-drop.html', assetBase), { cache: 'no-store' }),
           fetch(versionedUrl('moodua-drop.css', assetBase), { cache: 'no-store' })
         ]);

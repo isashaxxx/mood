@@ -5,37 +5,37 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const PRODUCTS = {
     tee: {
-      name: 'Футболка', code: 'MINERAL', image: 'assets/drop/cutouts/mineral.png',
+      name: 'Футболка', code: 'MINERAL', image: 'assets/drop/cutouts/mineral.webp',
       colors: [{ name: 'Мʼята', hex: '#9fd9d2' }, { name: 'Графіт', hex: '#263b59' }, { name: 'Молочний', hex: '#e9e4d9' }, { name: 'Корал', hex: '#f47b48' }],
       materials: ['Щільна бавовна 240 г', 'Organic cotton 220 г'],
       branding: ['Багатошаровий патч', 'Шовкодрук', 'Вишивка']
     },
     pocketTee: {
-      name: 'Футболка з кишенею', code: 'MANIFEST', image: 'assets/drop/cutouts/manifest.png',
+      name: 'Футболка з кишенею', code: 'MANIFEST', image: 'assets/drop/cutouts/manifest.webp',
       colors: [{ name: 'Бірюза', hex: '#53bfc0' }, { name: 'Графіт', hex: '#263b59' }, { name: 'Молочний', hex: '#e9e4d9' }],
       materials: ['Виварена бавовна 240 г', 'Щільна бавовна 260 г'],
       branding: ['Кастомна кишеня', 'Комбінований друк', 'Нашивка']
     },
     longsleeve: {
-      name: 'Лонгслів', code: 'CIPHER', image: 'assets/drop/cutouts/cipher.png',
+      name: 'Лонгслів', code: 'CIPHER', image: 'assets/drop/cutouts/cipher.webp',
       colors: [{ name: 'Мʼята', hex: '#9fd9d2' }, { name: 'Графіт', hex: '#263b59' }, { name: 'Молочний', hex: '#e9e4d9' }],
       materials: ['Бавовна 220 г', 'Бавовна з еластаном'],
       branding: ['3D-вишивка', 'Екошкіра', 'Шовкодрук']
     },
     polo: {
-      name: 'Тепле поло', code: 'VELLURA', image: 'assets/drop/vellura-front-cutout.png',
+      name: 'Тепле поло', code: 'VELLURA', image: 'assets/drop/vellura-front-cutout.webp',
       colors: [{ name: 'Молочний', hex: '#e9e4d9' }, { name: 'Мʼята', hex: '#9fd9d2' }, { name: 'Графіт', hex: '#263b59' }],
       materials: ['Футер 320 г', 'Трикотаж 280 г'],
       branding: ['Кастомний комір', 'Вишивка', 'Принт на спині']
     },
     hoodie: {
-      name: 'Худі', code: 'VERVIE', image: 'assets/drop/cutouts/vervie.png',
+      name: 'Худі', code: 'VERVIE', image: 'assets/drop/cutouts/vervie.webp',
       colors: [{ name: 'Молочний', hex: '#e9e4d9' }, { name: 'Графіт', hex: '#263b59' }, { name: 'Мʼята', hex: '#9fd9d2' }, { name: 'Корал', hex: '#f47b48' }],
       materials: ['Футер тринитка 350 г', 'Organic cotton 380 г'],
       branding: ['Намистини та принт', 'Обʼємне тиснення', 'Вишивка']
     },
     embossedHoodie: {
-      name: 'Худі з тисненням', code: 'BARREL', image: 'assets/drop/cutouts/barrel.png',
+      name: 'Худі з тисненням', code: 'BARREL', image: 'assets/drop/cutouts/barrel.webp',
       colors: [{ name: 'Молочний', hex: '#e9e4d9' }, { name: 'Графіт', hex: '#263b59' }, { name: 'Корал', hex: '#f47b48' }],
       materials: ['Футер тринитка 380 г', 'Бавовна premium 400 г'],
       branding: ['Обʼємне тиснення', 'Вишивка', 'Жакардова бірка'],
