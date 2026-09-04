@@ -5,7 +5,7 @@
 @font-face{font-family:'Manrope';font-style:normal;font-weight:800;font-display:swap;src:url('assets/drop/manrope-800.ttf') format('truetype')}
 
 :root, :host {
-  --ink: #121e31;
+  --ink: #324158;
   --ink-light: #1e304c;
   --deep: #0e1726;
   --aqua: #2eb4b9;
@@ -386,19 +386,13 @@ h1 em, h2 em, h3 em, dialog h2 em {
   position: relative;
   z-index: 3;
   min-height: 0;
-  align-self: center;
-  width: clamp(400px, 92%, 720px);
-  margin: 28px auto;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--line-dark) transparent;
-  padding: clamp(24px, 3.5vw, 44px);
+  padding: clamp(28px, 4.5vw, 64px);
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 24px 48px -24px rgba(18, 30, 49, 0.3);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -607,17 +601,12 @@ h1 em, h2 em, h3 em, dialog h2 em {
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.12em;
-  padding: 5px 12px;
-  border-radius: var(--radius-full);
   width: max-content;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(8px);
   color: var(--ink);
   z-index: 3;
 }
 
 .product-card.navy > span {
-  background: rgba(255, 255, 255, 0.15);
   color: #ffffff;
 }
 
@@ -651,7 +640,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .product-card.navy div {
-  background: rgba(14, 25, 41, 0.82);
+  background: rgba(38, 64, 92, 0.82);
   border-color: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
@@ -735,7 +724,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 /* Catalog Card Colors */
-.product-card.navy { background: #152438; color: #ffffff; border-color: rgba(255, 255, 255, 0.10); }
+.product-card.navy { background: #26405c; color: #ffffff; border-color: rgba(255, 255, 255, 0.10); }
 .product-card.coral { background: #fdf0ec; color: var(--ink); }
 .product-card.milk { background: #f4f0e6; color: var(--ink); }
 .product-card.mint { background: #eaf4f0; color: var(--ink); }

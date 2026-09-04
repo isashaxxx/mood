@@ -8,7 +8,7 @@ const storySlides = [
   { code:'MINERAL', title:'Виварена футболка', description:'Щільна бавовна, oversize-крій та багатошаровий патч із характером.', material:'Бавовна 240 г', branding:'Багатошаровий патч', image:'assets/drop/cutouts/mineral.png', color:'#91d5d7', dot:'#73c8c5', filter:'none' },
   { code:'MANIFEST', title:'Футболка з кишенею', description:'Не просто логотип — функціональна деталь, що продовжує сенс бренду.', material:'Виварена бавовна', branding:'Кастомна кишеня', image:'assets/drop/cutouts/manifest.png', color:'#ff805b', dot:'#ff754c', filter:'none' },
   { code:'VELLURA', title:'Тепле поло', description:'Мʼяка форма, контрастний комір і графіка, яку хочеться роздивлятися.', material:'Футер 320 г', branding:'Комір і принт', image:'assets/drop/vellura-front-cutout.png', secondary:'assets/drop/vellura-back-cutout.png', color:'#e8e1d4', dot:'#e4ddcf', filter:'none' },
-  { code:'VERVIE', title:'Худі з характером', description:'Обʼємний силует, сміливий принт і маленькі деталі, що створюють wow.', material:'Футер 350 г', branding:'Принт і намистини', image:'assets/drop/cutouts/vervie.png', color:'#bce6d2', dot:'#b4decb', filter:'none' }
+  { code:'VERVIE', title:'Худі з намистинами', description:'Обʼємний силует, сміливий принт і маленькі деталі, що створюють wow.', material:'Футер 350 г', branding:'Принт і намистини', image:'assets/drop/cutouts/vervie.png', color:'#bce6d2', dot:'#b4decb', filter:'none' }
 ];
 
 const storyEls = {
