@@ -85,7 +85,8 @@ img {
 
 .section-heading > .eyebrow,
 .catalog-heading .eyebrow,
-.builder-heading > .eyebrow {
+.builder-heading > .eyebrow,
+.faq-heading > .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1013,7 +1014,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
 .editor-preview {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   margin: 24px;
   min-height: 0;
@@ -1026,7 +1027,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
 
 .editor-preview img {
   max-width: 84%;
-  max-height: 84%;
+  max-height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 20px 32px rgba(18, 30, 49, 0.12));
   z-index: 2;
@@ -1324,13 +1325,43 @@ h1 em, h2 em, h3 em, dialog h2 em {
   padding-top: clamp(40px, 5vw, 64px);
 }
 
+.faq-shell {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) 1fr;
+  gap: clamp(32px, 5vw, 72px);
+  align-items: start;
+}
+
+.faq-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 32px;
+}
+
+.faq-heading h2 {
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
 .faq-list {
   max-width: 860px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
   counter-reset: faq;
+}
+
+@media (max-width: 860px) {
+  .faq-shell {
+    grid-template-columns: 1fr;
+  }
+  .faq-heading {
+    position: static;
+  }
 }
 
 .faq-item {
