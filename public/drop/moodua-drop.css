@@ -215,7 +215,8 @@ h1 em, h2 em, h3 em, dialog h2 em {
   letter-spacing: -0.04em;
 }
 
-.section-heading p:last-child {
+.section-heading p:last-child,
+.builder-heading p:last-child {
   font-size: clamp(15px, 1.2vw, 18px);
   line-height: 1.6;
   color: var(--text-muted);
