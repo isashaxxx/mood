@@ -1653,9 +1653,10 @@ dialog pre {
     padding: 8px 12px;
     gap: 6px;
   }
-  .builder-progress span {
-    padding: 10px 8px;
+  .builder-progress button {
+    padding: 10px 6px;
     font-size: 9px;
+    letter-spacing: 0.02em;
   }
   .product-picker {
     grid-template-columns: 1fr;
