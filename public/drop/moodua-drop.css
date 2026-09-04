@@ -1614,13 +1614,14 @@ dialog pre {
 
 @media (max-width: 640px) {
   .section {
-    padding: 60px 16px;
+    padding: 44px 16px;
   }
   .mood-root {
     background: transparent;
   }
   .hero {
-    padding: 24px 16px 40px;
+    min-height: 0;
+    padding: 100px 16px 32px;
     background: transparent;
   }
   .hero-photo {
@@ -1628,6 +1629,9 @@ dialog pre {
   }
   .hero-shade {
     display: none;
+  }
+  .hero-copy {
+    padding-bottom: 0;
   }
   .hero-copy h1 {
     font-size: clamp(40px, 11vw, 56px);
@@ -1654,8 +1658,8 @@ dialog pre {
     gap: 14px;
   }
   .product-card {
-    flex: 0 0 280px;
-    height: 480px;
+    flex: 0 0 260px;
+    height: 400px;
   }
   .builder-progress {
     padding: 8px 12px;
@@ -1687,7 +1691,7 @@ dialog pre {
     width: 100%;
   }
   .editor-preview {
-    height: 360px;
+    height: 320px;
   }
   .editor-controls {
     padding: 24px 16px;
