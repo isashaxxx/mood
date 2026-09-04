@@ -386,10 +386,19 @@ h1 em, h2 em, h3 em, dialog h2 em {
   position: relative;
   z-index: 3;
   min-height: 0;
+  align-self: center;
+  width: clamp(400px, 92%, 720px);
+  margin: 28px auto;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--line-dark) transparent;
-  padding: clamp(28px, 4.5vw, 64px);
+  padding: clamp(24px, 3.5vw, 44px);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 48px -24px rgba(18, 30, 49, 0.3);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -665,6 +674,28 @@ h1 em, h2 em, h3 em, dialog h2 em {
 
 .product-card.navy p {
   color: #a8b6c8;
+}
+
+.product-card.navy .catalog-select {
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.product-card.navy .catalog-select:hover {
+  background: #e9edf2;
+}
+
+.product-card.navy .catalog-select.selected {
+  background: #3bb9be;
+  color: #ffffff;
+}
+
+.product-card.navy .catalog-select .material-icon {
+  filter: none;
+}
+
+.product-card.navy .catalog-select.selected .material-icon {
+  filter: brightness(0) invert(1);
 }
 
 .catalog-select {
@@ -1454,10 +1485,19 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 /* Closing Section */
+.closing-deco {
+  position: absolute;
+  left: -80px;
+  bottom: -140px;
+  width: clamp(340px, 32vw, 560px);
+  height: auto;
+  z-index: -1;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
 .closing {
-  background:
-    radial-gradient(120% 140% at 10% -10%, rgba(255, 255, 255, 0.4), transparent 45%),
-    linear-gradient(135deg, #23a5aa 0%, #2eb4b9 40%, #4fcdc8 70%, #8fe8da 100%);
+  background: #2bb3ba;
   color: #ffffff;
   padding: clamp(80px, 9vw, 140px) clamp(20px, 5vw, 84px);
   position: relative;
