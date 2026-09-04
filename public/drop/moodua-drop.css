@@ -390,9 +390,6 @@ h1 em, h2 em, h3 em, dialog h2 em {
   scrollbar-width: thin;
   scrollbar-color: var(--line-dark) transparent;
   padding: clamp(28px, 4.5vw, 64px);
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(16px);
-  border-left: 1px solid rgba(18, 30, 49, 0.06);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -779,13 +776,13 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .builder-progress button.active {
-  background: #3bb9be;
+  background: var(--ink);
   color: #ffffff;
 }
 
 .builder-progress button.active:hover {
   color: #ffffff;
-  background: #3bb9be;
+  background: var(--ink);
 }
 
 /* Picker Panel */
@@ -1327,7 +1324,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
 
 .faq-shell {
   display: grid;
-  grid-template-columns: minmax(240px, 320px) 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: clamp(32px, 5vw, 72px);
   align-items: start;
 }
@@ -1341,14 +1338,12 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .faq-heading h2 {
-  font-size: clamp(28px, 3vw, 40px);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-size: clamp(38px, 4.8vw, 76px);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
 }
 
 .faq-list {
-  max-width: 860px;
   display: flex;
   flex-direction: column;
   gap: 10px;
