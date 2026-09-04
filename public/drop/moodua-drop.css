@@ -1632,6 +1632,12 @@ dialog pre {
   .hero-copy h1 {
     font-size: clamp(40px, 11vw, 56px);
   }
+  .section-heading h2,
+  .catalog-heading h2,
+  .builder-heading h2,
+  .faq-heading h2 {
+    font-size: clamp(28px, 8.5vw, 40px);
+  }
   .catalog-heading {
     flex-direction: column;
     align-items: flex-start;
