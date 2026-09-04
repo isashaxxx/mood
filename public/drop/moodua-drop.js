@@ -65,7 +65,7 @@ originalCatalogCards.forEach((card, index) => {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'catalog-select';
-  button.innerHTML = `Обрати ${materialIcon('arrow-forward')}`;
+  button.textContent = 'Обрати';
   card.querySelector('div').append(button);
 });
 const catalogCardsBefore = originalCatalogCards.map((card) => {
@@ -137,9 +137,7 @@ function syncSelectionUI() {
     const isInCollection = hasItem(card.dataset.product);
     const button = card.querySelector('.catalog-select');
     button.classList.toggle('selected', isInCollection);
-    button.innerHTML = isInCollection
-      ? `Обрано ${materialIcon('check')}`
-      : `Обрати ${materialIcon('arrow-forward')}`;
+    button.textContent = isInCollection ? 'Обрано' : 'Обрати';
     button.setAttribute('aria-pressed', String(isInCollection));
   });
   const count = items.length;

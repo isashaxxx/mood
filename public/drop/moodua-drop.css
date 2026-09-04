@@ -243,7 +243,7 @@ h1 em, h2 em, h3 em, dialog h2 em {
   align-items: flex-start;
   gap: 20px;
   max-width: 540px;
-  padding-bottom: clamp(24px, 4vw, 56px);
+  padding-bottom: clamp(80px, 11vw, 160px);
 }
 
 .hero-copy .eyebrow {
@@ -325,8 +325,11 @@ h1 em, h2 em, h3 em, dialog h2 em {
 
 .story-watermark {
   position: absolute;
-  left: 4%;
+  left: 50%;
   top: 8%;
+  transform: translateX(-50%);
+  width: 92%;
+  text-align: center;
   font-size: clamp(60px, 8vw, 130px);
   font-weight: 800;
   line-height: 0.8;
@@ -683,19 +686,21 @@ h1 em, h2 em, h3 em, dialog h2 em {
   background: var(--ink);
   color: #ffffff;
   border: 1px solid transparent;
-  transition: all 0.2s var(--ease);
+  transition: background-color 0.35s var(--ease), color 0.35s var(--ease), transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
   cursor: pointer;
 }
 
 .catalog-select:hover {
   background: var(--aqua);
   color: #ffffff;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(46, 180, 185, 0.35);
 }
 
 .catalog-select.selected {
   background: var(--aqua);
   color: #ffffff;
+  transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
 }
 
 .catalog-select .material-icon {
@@ -1316,8 +1321,8 @@ h1 em, h2 em, h3 em, dialog h2 em {
 
 /* Closing Section */
 .closing {
-  background: #00ccc0;
-  color: var(--ink);
+  background: #3bb9be;
+  color: #ffffff;
   padding: clamp(80px, 9vw, 140px) clamp(20px, 5vw, 84px);
   position: relative;
   overflow: hidden;
@@ -1329,8 +1334,8 @@ h1 em, h2 em, h3 em, dialog h2 em {
 }
 
 .closing .eyebrow {
-  color: var(--ink);
-  opacity: 0.65;
+  color: #ffffff;
+  opacity: 0.8;
   letter-spacing: 0.16em;
 }
 
@@ -1338,12 +1343,12 @@ h1 em, h2 em, h3 em, dialog h2 em {
   font-size: clamp(48px, 6.5vw, 96px);
   line-height: 0.94;
   letter-spacing: -0.04em;
-  color: var(--ink);
+  color: #ffffff;
   max-width: 860px;
 }
 
 .closing h2 em {
-  color: var(--ink);
+  color: #ffffff;
 }
 
 .closing .button {
